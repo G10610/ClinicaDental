@@ -10,22 +10,28 @@
 <body>
     <nav>
         <ul>
-            <li>
-                <a href="/">HOME</a>
-            </li>
-            <li>
-                <a href="/index">index</a>
-            </li>
             {% if user.is_authenticated %}
+              <li>
+                <a href="/">Inicio</a>
+            </li>
             <li>
-                <a href="/salir">CerrarSesion</a>
+                <a href="{% url 'crudpacientes' %}">Pacientes</a>
+            </li>
+            <li>
+                <a href="{% url 'crudempleados' %}">Empleados</a>
+            </li>
+              <li>
+                <a href="{% url 'crudespecialistas' %}">Especialistas</a>
+            </li>
+            <li>
+                <a href="{% url 'logout' %}">Cerrar Sesion</a>
             </li>
             {% else %}
             <li>
-                <a href="/signup">Registrarse</a>
+                <a href="{% url 'signup' %}">Registrarse</a>
             </li>
              <li>
-                <a href="/iniciarsesion">Iniciar Sesion</a>
+                <a href="{% url 'login' %}">Iniciar Sesion</a>
             </li>
             {% endif %}
         </ul>
