@@ -6,12 +6,16 @@ from . models import Paciente
 
 # Create your views here.
 
+
 @login_required
 def crudpacientes(request):
     return render(request, 'gestionpacientes.html')
+
+
 @login_required
 def crearpacientes(request):
     return render(request, 'crearpacientes.html')
+
 
 @login_required
 def crearpacientessss(request):
@@ -29,10 +33,17 @@ def crearpacientessss(request):
                 'form': CrearPacienteForm,
                 'error': 'Ingresa datos validos'
             })
-        
 
 
 @login_required
 def lista(request):
     pacientes = Paciente.objects.all()
     return render(request, "listaPacientes.html", {"pacientes": pacientes})
+
+
+@login_required
+def eliminarpaciente(request, id):
+    paciente = Paciente.objects.get(id=id)
+    paciente.delete()
+
+    return redirect('lista')
