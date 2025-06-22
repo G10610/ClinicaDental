@@ -12,9 +12,9 @@ def crudpacientes(request):
     return render(request, 'gestionpacientes.html')
 
 
-@login_required
+'''@login_required
 def crearpacientes(request):
-    return render(request, 'crearpacientes.html')
+    return render(request, 'crearpacientes.html')'''
 
 
 @login_required
