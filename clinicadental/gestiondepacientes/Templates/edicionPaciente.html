@@ -1,0 +1,56 @@
+{% extends 'basepacientes.html' %}
+
+{% block content %}
+
+<h1>Editar paciente</h1>
+
+<form action="{% url 'editarpaciente'%}" method="POST">{% csrf_token %}
+
+        <p hidden>
+            <label>ID: 
+                <input type="number" id="id" name="id" value="{{paciente.id}}" readonly required>
+            </label>
+        </p>
+
+        <p>
+            <label>Nombre: 
+                <input type="text" id="nombre" name="nombre" value="{{paciente.nombre}}" required>
+            </label>
+        </p>
+        
+        <p>
+            <label>Apellido: 
+                <input type="text" id="apellido" name="apellido" value="{{paciente.apellido}}" required>
+            </label>
+        </p>
+        
+        <p>
+            <label>DUI: 
+                <input type="text" id="dui" name="dui" value="{{paciente.dui}}" required>
+            </label>
+        </p>
+        
+        <p>
+            <label>Fecha de ingreso: 
+                <input type="date" id="fecha_ingreso" name="fecha_ingreso" value="{{paciente.fecha_ingreso}}" required>
+            </label>
+        </p>
+        
+        <p>
+            <label>Correo: 
+                <input type="email" id="correo" name="correo" value="{{paciente.correo}}" required>
+            </label>
+        </p>
+        
+        <p>
+            <label>Teléfono: 
+                <input type="tel" id="telefono" name="telefono" value="{{paciente.telefono}}" required>
+            </label>
+        </p>
+        
+        <p>
+            <input type="submit" value="Enviar">
+        </p>
+    </form>
+
+{% endblock %}

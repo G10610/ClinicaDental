@@ -134,6 +134,13 @@
                             onclick="return confirm('¿Estás seguro que deseas eliminar este paciente?');">Eliminar</button>
                     </form>
 
+                                        <!-- Botón de editar -->
+                    <form method="post" action="{% url 'edicionpaciente' paciente.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Editar</button>
+                    </form>
+                    
+                    
                 </td>
             </tr>
             {% endfor %}

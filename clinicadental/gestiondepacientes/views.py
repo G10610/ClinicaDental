@@ -40,6 +40,34 @@ def lista(request):
     pacientes = Paciente.objects.all()
     return render(request, "listaPacientes.html", {"pacientes": pacientes})
 
+@login_required
+def edicionPaciente(request, id):
+    paciente = Paciente.objects.get(id=id)
+    return render(request, "edicionPaciente.html", {"paciente": paciente})
+
+@login_required
+def editarPaciente(request):
+    
+    paciente_id= request.POST['id']
+    nombre = request.POST['nombre']
+    apellido = request.POST['apellido']
+    dui = request.POST['dui']
+    fecha_ingreso = request.POST['fecha_ingreso']
+    correo = request.POST['correo']
+    telefono = request.POST['telefono']
+
+    paciente = Paciente.objects.get(id=paciente_id)
+    paciente.nombre = nombre
+    paciente.apellido = apellido
+    paciente.dui = dui
+    paciente.fecha_ingreso = fecha_ingreso
+    paciente.correo = correo
+    paciente.telefono = telefono
+
+    paciente.save()
+    return redirect('lista')
+
+
 
 @login_required
 def eliminarpaciente(request, id):
