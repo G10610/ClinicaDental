@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,12 +9,12 @@
 
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-        <style>
-
+    <style>
         h1 {
             color: #2c3e50;
             margin-bottom: 20px;
         }
+
         .btn {
             padding: 5px 10px;
             text-decoration: none;
@@ -22,35 +23,41 @@
             margin: 2px;
             display: inline-block;
         }
+
         .btn-primary {
             background-color: #3498db;
             color: white;
             border: 1px solid #2980b9;
         }
+
         .btn-danger {
             background-color: #e74c3c;
             color: white;
             border: 1px solid #c0392b;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             background-color: #fcfcfd;
-            
+
         }
 
 
-        th, td {
+        th,
+        td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #131111;
         }
+
         th {
             background-color: #f8f9fa;
             font-weight: bold;
         }
+
         tr:hover {
-            
+
             background-color: #fc5e5e;
         }
     </style>
@@ -58,9 +65,10 @@
 
     <title>Document</title>
 </head>
+
 <body>
 
-        <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="#">MMDentis</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -81,12 +89,12 @@
                     </li>
 
 
-                     <li class="nav-item">
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'lista' %}">Lista de pacientes</a>
                     </li>
 
 
-                    
+
                     {% endif %}
                 </ul>
             </div>
@@ -95,7 +103,7 @@
 
     <h1>Lista de pacientes</h1>
 
-        <table id="pacientesTable" class="display">
+    <table id="pacientesTable" class="display">
         <thead>
             <tr>
                 <th>Nombre</th>
@@ -109,29 +117,36 @@
         </thead>
 
         <tbody>
-    {% for paciente in pacientes %}
-    <tr>
-        <td>{{ paciente.nombre }}</td>
-        <td>{{ paciente.apellido }}</td>
-        <td>{{ paciente.dui }}</td>
-        <td>{{ paciente.fecha_ingreso|date:"Y-m-d" }}</td>
-        <td>{{ paciente.correo }}</td>
-        <td>{{ paciente.telefono }}</td>
-        <td>
+            {% for paciente in pacientes %}
+            <tr>
+                <td>{{ paciente.nombre }}</td>
+                <td>{{ paciente.apellido }}</td>
+                <td>{{ paciente.dui }}</td>
+                <td>{{ paciente.fecha_ingreso|date:"Y-m-d" }}</td>
+                <td>{{ paciente.correo }}</td>
+                <td>{{ paciente.telefono }}</td>
+                <td>
 
-        </td>
-    </tr>
-    {% endfor %}
-</tbody>
+                    <!-- Botón de eliminar -->
+                    <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm"
+                            onclick="return confirm('¿Estás seguro que deseas eliminar este paciente?');">Eliminar</button>
+                    </form>
 
-        </table>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
 
     <!-- jQuery y DataTables JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    
+
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#pacientesTable').DataTable({
                 language: {
                     url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
@@ -144,4 +159,5 @@
     </script>
 
 </body>
+
 </html>
