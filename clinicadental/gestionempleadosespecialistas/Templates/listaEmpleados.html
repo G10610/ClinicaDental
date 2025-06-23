@@ -85,12 +85,12 @@
 
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'crearempleados' %}">Crear Empleados</a>
-                    </li>   
+                    </li>
 
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'listaempleados' %}">Lista de empleados</a>
-                    </li>                    
- 
+                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Cerrar Sesion</a>
                     </li>
@@ -132,9 +132,21 @@
                 <td>{{ empleado.telefono }}</td>
                 <td>
 
+                    <!-- Botón de editar -->
+                    <form method="post" action="{% url 'edicionempleado' empleado.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Editar</button>
+                    </form>
 
-                    
-                    
+
+                    <!-- Botón de eliminar -->
+                    <form method="post" action="{% url 'eliminarempleado' empleado.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm"
+                            onclick="return confirm('¿Estás seguro que deseas eliminar este Empleado?');">Eliminar</button>
+                    </form>
+
+
                 </td>
             </tr>
             {% endfor %}
