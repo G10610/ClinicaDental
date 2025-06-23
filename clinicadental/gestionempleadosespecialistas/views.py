@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .forms import CrearEmpleadoForm
 from django.contrib.auth.decorators import login_required
 
-
+from . models import Empleado
 # Create your views here.
 
 @login_required
@@ -29,3 +29,10 @@ def crearempleados(request):
                 'form': CrearEmpleadoForm,
                 'error': 'Ingresa datos validos'
             })
+        
+
+
+@login_required
+def listaempleados(request):
+    empleados = Empleado.objects.all()
+    return render(request, "listaEmpleados.html", {"empleados": empleados})

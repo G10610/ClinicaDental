@@ -5,4 +5,5 @@ urlpatterns = [
     path('empleados/', views.crudempleados, name='crudempleados'),
     path('especialistas/', views.crudespecialistas, name='crudespecialistas'),
     path('crearempleados/', views.crearempleados, name='crearempleados'),
+    path('listaempleados/', views.listaempleados, name='listaempleados'),
 ]
