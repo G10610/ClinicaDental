@@ -78,20 +78,23 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
+
                     <li class="nav-item">
                         <a class="nav-link" href="/">Inicio</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'crearpacientes' %}">Crear Pacientes</a>
-                    </li>
-                    
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'lista' %}">Lista de pacientes</a>
-                    </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'crearempleados' %}">Crear Empleados</a>
+                    </li>   
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listaempleados' %}">Lista de empleados</a>
+                    </li>                    
+ 
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Cerrar Sesion</a>
                     </li>
+
 
 
 
@@ -103,44 +106,33 @@
         </div>
     </nav>
 
-    <h1>Lista de pacientes</h1>
+    <h1>Lista de empleados</h1>
 
-    <table id="pacientesTable" class="display">
+    <table id="empleadosTable" class="display">
         <thead>
             <tr>
                 <th>Nombre</th>
                 <th>Apellido</th>
                 <th>DUI</th>
                 <th>Fecha Ingreso</th>
-                <th>Correo</th>
+                <th>Salario</th>
                 <th>Teléfono</th>
                 <th>Acciones</th>
             </tr>
         </thead>
 
         <tbody>
-            {% for paciente in pacientes %}
+            {% for empleado in empleados %}
             <tr>
-                <td>{{ paciente.nombre }}</td>
-                <td>{{ paciente.apellido }}</td>
-                <td>{{ paciente.dui }}</td>
-                <td>{{ paciente.fecha_ingreso|date:"Y-m-d" }}</td>
-                <td>{{ paciente.correo }}</td>
-                <td>{{ paciente.telefono }}</td>
+                <td>{{ empleado.nombre }}</td>
+                <td>{{ empleado.apellido }}</td>
+                <td>{{ empleado.dui }}</td>
+                <td>{{ empleado.fecha_ingreso|date:"Y-m-d" }}</td>
+                <td>{{ empleado.salario }}</td>
+                <td>{{ empleado.telefono }}</td>
                 <td>
 
-                    <!-- Botón de eliminar -->
-                    <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm"
-                            onclick="return confirm('¿Estás seguro que deseas eliminar este paciente?');">Eliminar</button>
-                    </form>
 
-                                        <!-- Botón de editar -->
-                    <form method="post" action="{% url 'edicionpaciente' paciente.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">Editar</button>
-                    </form>
                     
                     
                 </td>
@@ -156,7 +148,7 @@
 
     <script>
         $(document).ready(function () {
-            $('#pacientesTable').DataTable({
+            $('#empleadosTable').DataTable({
                 language: {
                     url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
                 },
