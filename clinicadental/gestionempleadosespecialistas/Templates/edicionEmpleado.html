@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<h1 align="center">Editar Empleado</h1>
+<!-- <h1 align="center">Editar Empleado</h1>
 
 <style>
     /* Estilos generales */
@@ -95,6 +95,7 @@
 </style>
 
 <form action="{% url 'editarempleado' %}" method="POST">{% csrf_token %}
+    
     <p hidden>
         <label>ID:
             <input type="number" id="id" name="id" value="{{empleado.id}}" readonly required>
@@ -136,5 +137,33 @@
         <input type="submit" value="Guardar cambios" class="btn-submit">
     </div>
 </form>
+-->
+
+<main class="container">
+    <div class="row">
+        <div class="col-md-4 offset-md-4 mt-5">
+            <form method="POST" class="card card-body">
+                <h1 class="text-center">Editar Empleado</h1>
+                {{error}}
+                {% csrf_token %}
+               
+                {{ form.as_p }}
+
+                <button class="btn btn-primary">
+                    Editar Empleado
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+<script defer src="https://unpkg.com/imask"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('id_dui');
+        if (input) {
+            IMask(input, { mask: '00000000-0' });
+        }
+    });
+</script>
 
 {% endblock %}

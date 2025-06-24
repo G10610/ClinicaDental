@@ -50,7 +50,15 @@
             </div>
         </div>
     </main>
-
+    <script defer src="https://unpkg.com/imask"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('id_dui');
+            if (input) {
+                IMask(input, { mask: '00000000-0' });
+            }
+        });
+    </script>
 </body>
 
 </html>

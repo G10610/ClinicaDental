@@ -8,7 +8,9 @@ dui_validator = RegexValidator(
 )
 
 class CrearEmpleadoForm(forms.ModelForm):
+    
     dui = forms.CharField(
+        
         max_length=10,
         validators=[dui_validator],
         widget=forms.TextInput(attrs={
