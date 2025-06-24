@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .forms import CrearEmpleadoForm
 from django.contrib.auth.decorators import login_required
 
@@ -40,10 +40,10 @@ def listaempleados(request):
     return render(request, "listaEmpleados.html", {"empleados": empleados})
 
 
-@login_required
-def edicionEmpleado(request, id):
-    empleado = Empleado.objects.get(id=id)
-    return render(request, "edicionEmpleado.html", {"empleado": empleado})
+#@login_required
+#def edicionEmpleado(request, id):
+ #   empleado = Empleado.objects.get(id=id)
+ #   return render(request, "edicionEmpleado.html", {"empleado": empleado})
 
 
 @login_required
@@ -75,3 +75,17 @@ def eliminarEmpleado(request, id):
     empleado.delete()
 
     return redirect('listaempleados')
+
+@login_required
+def edicionEmpleado(request, id):
+    empleado = get_object_or_404(Empleado, id=id)
+
+    if request.method == "POST":
+        form = CrearEmpleadoForm(request.POST, instance=empleado, use_required_attribute=False)
+        if form.is_valid():
+            form.save()
+            return redirect('listaempleados')
+    else:
+        form = CrearEmpleadoForm(instance=empleado, use_required_attribute=False)
+
+    return render(request, "edicionEmpleado.html", {"form": form})
