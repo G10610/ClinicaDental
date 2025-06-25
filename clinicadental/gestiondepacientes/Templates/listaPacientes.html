@@ -70,7 +70,7 @@
 
     <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">MMDentis</a>
+            <a class="navbar-brand" href="/">MMDentis</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -84,7 +84,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'crearpacientes' %}">Crear Pacientes</a>
                     </li>
-                    
+
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'lista' %}">Lista de pacientes</a>
                     </li>
@@ -92,11 +92,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Cerrar Sesion</a>
                     </li>
-
-
-
-
-
                     {% endif %}
                 </ul>
             </div>
@@ -129,6 +124,13 @@
                 <td>{{ paciente.telefono }}</td>
                 <td>
 
+
+                    <!-- Botón de editar -->
+                    <form method="post" action="{% url 'edicionpaciente' paciente.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Editar</button>
+                    </form>
+
                     <!-- Botón de eliminar -->
                     <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" style="display:inline;">
                         {% csrf_token %}
@@ -136,13 +138,8 @@
                             onclick="return confirm('¿Estás seguro que deseas eliminar este paciente?');">Eliminar</button>
                     </form>
 
-                                        <!-- Botón de editar -->
-                    <form method="post" action="{% url 'edicionpaciente' paciente.id %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">Editar</button>
-                    </form>
-                    
-                    
+
+
                 </td>
             </tr>
             {% endfor %}

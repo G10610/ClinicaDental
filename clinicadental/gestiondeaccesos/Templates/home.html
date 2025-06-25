@@ -1,7 +1,43 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block content %}
 
-<h1>HOME</h1>
+<style>
+  .fondo-hero {
+    height: 70vh;
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+                url("{% static 'img/fondo1.jpg' %}") center/cover no-repeat;
+  }
+</style>
+
+<section class="bg-dark text-white d-flex align-items-start fondo-hero">
+  <div class="container text-center py-5">
+    <h1 class="display-4 fw-bold">Bienvenido a su Clínica Dental MMDentis</h1>
+    <p class="lead">Atendiendo con pasión y tecnología desde 1995.</p>
+  </div>
+</section>
+
+<section id="historia" class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <img src="{% static 'img/fondo.jpg' %}" alt="Fachada Clínica" class="img-fluid rounded shadow">
+            </div>
+            <div class="col-md-6">
+                <h2>Nuestra Historia</h2>
+                <p>Somos una clínica dental emergente que atiende de
+                    la mejor manera a todos y cada uno de los pacientes que ingresan
+                    a solicitar de nuestros servicios clínicos dentales, tanto recurrentes
+                    como los que requieran atención de especialistas. Poco a poco hemos construido
+                    una reputación positiva para tener un respaldo que garantice el buen servicio que
+                    brindamos, todo mediante la opinión sincera de los pacientes que con sus propias
+                    experiencias puede recomendarnos ante cualquier persona que tenga una necesidad,
+                    emergencia u operación estética relacionado a la salud dental.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
 {% endblock %}
