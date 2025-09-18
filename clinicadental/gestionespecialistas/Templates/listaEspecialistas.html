@@ -84,11 +84,11 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'crearempleados' %}">Crear Empleados</a>
+                        <a class="nav-link" href="{% url 'crearespecialistas' %}">Crear Especialista</a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listaempleados' %}">Lista de empleados</a>
+                        <a class="nav-link" href="{% url 'listaespecialistas' %}">Lista de especialistas</a>
                     </li>
 
                     <li class="nav-item">
@@ -106,44 +106,46 @@
         </div>
     </nav>
 
-    <h1>Lista de empleados</h1>
+    <h1>Lista de especialistas</h1>
 
-    <table id="empleadosTable" class="display">
+    <table id="especialistasTable" class="display">
         <thead>
             <tr>
                 <th>Nombre</th>
                 <th>Apellido</th>
-                <th>DUI</th>
-                <th>Fecha Ingreso</th>
-                <th>Salario</th>
+                <th>Especialidad</th>
                 <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Dui</th>
                 <th>Acciones</th>
             </tr>
         </thead>
 
         <tbody>
-            {% for empleado in empleados %}
+            {% for especialista in especialistas %}
             <tr>
-                <td>{{ empleado.nombre }}</td>
-                <td>{{ empleado.apellido }}</td>
-                <td>{{ empleado.dui }}</td>
-                <td>{{ empleado.fecha_ingreso|date:"Y-m-d" }}</td>
-                <td>{{ empleado.salario }}</td>
-                <td>{{ empleado.telefono }}</td>
+                <td>{{ especialista.nombre }}</td>
+                <td>{{ especialista.apellido }}</td>
+                <td>{{ especialista.especialidad }}</td>
+                <td>{{ especialista.telefono }}</td>
+                <td>{{ especialista.correo }}</td>
+                <td>{{ especialista.dui }}</td>
                 <td>
 
                     <!-- Botón de editar -->
-                    <form method="post" action="{% url 'edicionempleado' empleado.id %}" style="display:inline;">
+                    <form method="post" action="{% url 'edicionespecialista' especialista.id %}"
+                        style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary">Editar</button>
                     </form>
 
 
                     <!-- Botón de eliminar -->
-                    <form method="post" action="{% url 'eliminarempleado' empleado.id %}" style="display:inline;">
+                    <form method="post" action="{% url 'eliminarespecialista' especialista.id %}"
+                        style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm"
-                            onclick="return confirm('¿Estás seguro que deseas eliminar este Empleado?');">Eliminar</button>
+                            onclick="return confirm('¿Estás seguro que deseas eliminar este especialista?');">Eliminar</button>
                     </form>
 
 
@@ -160,7 +162,7 @@
 
     <script>
         $(document).ready(function () {
-            $('#empleadosTable').DataTable({
+            $('#especialistasTable').DataTable({
                 language: {
                     url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
                 },

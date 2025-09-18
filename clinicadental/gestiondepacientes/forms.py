@@ -22,7 +22,7 @@ class CrearPacienteForm(forms.ModelForm):
         )
         class Meta:
          model = Paciente
-         fields = ['nombre','apellido','dui','fecha_ingreso','correo','telefono']
+         fields = ['nombre','apellido','dui','fecha_ingreso','correo','telefono', 'direccion']
          widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'apellido': forms.TextInput(attrs={'class': 'form-control'}),
@@ -30,4 +30,5 @@ class CrearPacienteForm(forms.ModelForm):
             'correo': forms.TextInput(attrs={'class': 'form-control','type': 'email','pattern': r'[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$',
             'title': 'Formato: usuario@dominio.ext',}),
             'telefono': forms.TextInput(attrs={'class': 'form-control','type': 'tel','placeholder': '+503 1234‑5678'}),
+            'direccion': forms.TextInput(attrs={'class': 'form-control'}),
         }

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Empleado
+from .models import Especialista
 from django.core.validators import RegexValidator
 
 dui_validator = RegexValidator(
@@ -7,10 +7,11 @@ dui_validator = RegexValidator(
     message='El DUI debe tener el formato 12345678-9'
 )
 
-class CrearEmpleadoForm(forms.ModelForm):
-    
+
+class CrearEspecialistaForm(forms.ModelForm):
+
     dui = forms.CharField(
-        
+
         max_length=10,
         validators=[dui_validator],
         widget=forms.TextInput(attrs={
@@ -21,15 +22,15 @@ class CrearEmpleadoForm(forms.ModelForm):
         }),
         help_text='Ingrese el DUI en formato 12345678-9'
     )
+
     class Meta:
-        model = Empleado
-        fields = ['nombre','apellido','dui','fecha_ingreso','salario','telefono']
+        model = Especialista
+        fields = ['nombre', 'apellido', 'dui', 'especialidad', 'correo', 'telefono']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'apellido': forms.TextInput(attrs={'class': 'form-control'}),
-           # 'dui': forms.TextInput(attrs={'class': 'form-control',}),
-            'fecha_ingreso': forms.DateInput(attrs={'class': 'form-control','type': 'date'}, format='%Y-%m-%d'),
-            'salario': forms.NumberInput(attrs={'class': 'form-control','step': '0.01'}),
-            'telefono': forms.TextInput(attrs={'class': 'form-control','type': 'tel','placeholder': '+503 1234‑5678'}),
+            'dui': forms.TextInput(attrs={'class': 'form-control', }),
+            'especialidad': forms.TextInput(attrs={'class': 'form-control'}),
+            'correo': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'type': 'tel', 'placeholder': '+503 1234‑5678'}),
         }
-

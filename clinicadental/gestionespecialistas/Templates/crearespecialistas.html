@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMDentis Administración</title>
+    <title>MMDentist Agregar Especialistas</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
 </head>
 
@@ -24,13 +24,8 @@
                         <a class="nav-link" href="/">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'crearempleados' %}">Crear Empleados</a>
+                        <a class="nav-link" href="{% url 'crudespecialistas' %}">Especialistas</a>
                     </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listaempleados' %}">Lista Empleados</a>
-                    </li>
-
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Cerrar Sesion</a>
                     </li>
@@ -40,9 +35,30 @@
         </div>
     </nav>
 
-    {% block content %}
-    {% endblock %}
-
+    <main class="container">
+        <div class="row">
+            <div class="col-md-4 offset-md-4 mt-5">
+                <form method="POST" class="card card-body">
+                    <h1 class="text-center">Crear Especialista</h1>
+                    {{error}}
+                    {% csrf_token %}
+                    {{form.as_p}}
+                    <button class="btn btn-primary">
+                        Crear
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+    <script defer src="https://unpkg.com/imask"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('id_dui');
+            if (input) {
+                IMask(input, { mask: '00000000-0' });
+            }
+        });
+    </script>
 </body>
 
 </html>
