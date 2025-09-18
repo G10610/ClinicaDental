@@ -1,0 +1,27 @@
+{% extends 'baseespecialistas.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid min-vh-100">
+  <div class="row h-100">
+    <div class="col-md-6 p-0">
+      <img src="{% static 'img/gestionar1.jpeg' %}" alt="Gestión de Especialistas" class="img-fluid w-100 h-100"
+        style="object-fit: cover;">
+    </div>
+    <div class="col-md-6 d-flex flex-column justify-content-start p-4">
+      <div class="alert alert-info">
+        Aquí puedes crear un especialista, listar especialistas y ver el total de registros.
+      </div>
+      <div class="d-flex gap-2 mb-4">
+        <a href="{% url 'crearespecialistas' %}" class="btn btn-primary">Crear Especialistas</a>
+        <a href="{% url 'listaespecialistas' %}" class="btn btn-secondary">Listar Especialistas</a>
+      </div>
+
+      <h5>Total de especialistas registrados:</h5>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

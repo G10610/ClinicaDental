@@ -106,9 +106,10 @@
                 <th>Nombre</th>
                 <th>Apellido</th>
                 <th>DUI</th>
-                <th>Fecha Ingreso</th>
                 <th>Correo</th>
                 <th>Teléfono</th>
+                <th>Dirección</th>
+                <th>Fecha Ingreso</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -116,15 +117,15 @@
         <tbody>
             {% for paciente in pacientes %}
             <tr>
-                <td>{{ paciente.nombre }}</td>
-                <td>{{ paciente.apellido }}</td>
-                <td>{{ paciente.dui }}</td>
-                <td>{{ paciente.fecha_ingreso|date:"Y-m-d" }}</td>
-                <td>{{ paciente.correo }}</td>
-                <td>{{ paciente.telefono }}</td>
+                <td>{{ paciente.nombre|default:"" }}</td>
+                <td>{{ paciente.apellido|default:"" }}</td>
+                <td>{{ paciente.dui|default:"" }}</td>
+                <td>{{ paciente.correo|default:"" }}</td>
+                <td>{{ paciente.telefono|default:"" }}</td>
+                <td>{{ paciente.direccion|default:"" }}</td>
+                <td>{{ paciente.fecha_ingreso|date:"Y-m-d"|default:"" }}</td>
                 <td>
-
-
+                    
                     <!-- Botón de editar -->
                     <form method="post" action="{% url 'edicionpaciente' paciente.id %}" style="display:inline;">
                         {% csrf_token %}

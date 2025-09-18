@@ -14,3 +14,4 @@ protobuf==4.21.12
 sqlparse==0.5.3
 tzdata==2025.2
 Werkzeug==2.3.6
+pylint-django==3.3.8
