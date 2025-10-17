@@ -55,6 +55,7 @@ def editarPaciente(request):
     fecha_ingreso = request.POST['fecha_ingreso']
     correo = request.POST['correo']
     telefono = request.POST['telefono']
+    direccion = request.POST['direccion']
 
     paciente = Paciente.objects.get(id=paciente_id)
     paciente.nombre = nombre
@@ -63,6 +64,7 @@ def editarPaciente(request):
     paciente.fecha_ingreso = fecha_ingreso
     paciente.correo = correo
     paciente.telefono = telefono
+    paciente.direccion = direccion
 
     paciente.save()
     return redirect('lista')

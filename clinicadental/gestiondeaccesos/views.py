@@ -1,43 +1,35 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.models import User
-from django.contrib.auth import login, logout, authenticate
-from django.http import HttpResponse
+from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 
-# Create your views here.
-
+User = get_user_model()
 
 def home(request):
     return render(request, 'home.html')
 
 def signup(request):
-
     if request.method == 'GET':
-        return render(request, 'signup.html', {
-            'form': UserCreationForm
-        }
-        )
+        form = UserCreationForm()
+        return render(request, 'signup.html', {'form': form})
+    
+    form = UserCreationForm(request.POST)
+    if form.is_valid():
+        try:
+            user = form.save()
+            login(request, user)
+            return redirect(home)
+        except IntegrityError:
+            return render(request, 'signup.html', {
+                'form': form,
+                'error': 'El usuario ya existe'
+            })
     else:
-        if request.POST['password1'] == request.POST['password2']:
-            # registrar usuario
-            try:
-                user = User.objects.create_user(username=request.POST['username'],
-                                                password=request.POST['password1'])
-                user.save()
-                login(request, user)
-                return redirect(home)
-            except:
-                return render(request, 'signup.html', {
-                    'form': UserCreationForm,
-                    "error": 'El Usuario ya Existe'
-                }
-                )
         return render(request, 'signup.html', {
-            'form': UserCreationForm,
-            "error": 'Contraseñas no coinciden'
-        }
-        )
+            'form': form,
+            'error': 'Por favor corrige los errores del formulario'
+        })
 
 @login_required
 def index(request):
@@ -48,21 +40,18 @@ def cerrarsesion(request):
     logout(request)
     return redirect(home)
 
-
 def iniciarsesion(request):
     if request.method == 'GET':
-        return render(request, 'iniciar.html', {
-            'form': AuthenticationForm
-        }
-        )
+        form = AuthenticationForm()
+        return render(request, 'iniciar.html', {'form': form})
+
+    form = AuthenticationForm(data=request.POST)
+    if form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        return redirect(home)
     else:
-        user = authenticate(
-            request, username=request.POST['username'], password=request.POST['password'])
-        if user is None:
-            return render(request, 'iniciar.html',{
-                'form': AuthenticationForm,
-                'error': 'Usuario o Contraseña Incorrecta'
-            })
-        else:
-            login(request, user)
-            return redirect(home)
+        return render(request, 'iniciar.html', {
+            'form': form,
+            'error': 'Usuario o contraseña incorrecta'
+        })

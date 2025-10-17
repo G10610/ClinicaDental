@@ -70,7 +70,7 @@
 
     <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">MMDentis</a>
+            <a class="navbar-brand" href="#">MMDentis</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -78,67 +78,75 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
+
                     <li class="nav-item">
                         <a class="nav-link" href="/">Inicio</a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'crearpacientes' %}">Crear Pacientes</a>
+                        <a class="nav-link" href="{% url 'crearespecialistas' %}">Crear Especialista</a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'lista' %}">Lista de pacientes</a>
+                        <a class="nav-link" href="{% url 'listaespecialistas' %}">Lista de especialistas</a>
                     </li>
 
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Cerrar Sesion</a>
                     </li>
+
+
+
+
+
+
                     {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
 
-    <h1>Lista de pacientes</h1>
+    <h1>Lista de especialistas</h1>
 
-    <table id="pacientesTable" class="display">
+    <table id="especialistasTable" class="display">
         <thead>
             <tr>
                 <th>Nombre</th>
                 <th>Apellido</th>
-                <th>DUI</th>
-                <th>Correo</th>
+                <th>Especialidad</th>
                 <th>Teléfono</th>
-                <th>Dirección</th>
-                <th>Fecha Ingreso</th>
+                <th>Correo</th>
+                <th>Dui</th>
                 <th>Acciones</th>
             </tr>
         </thead>
 
         <tbody>
-            {% for paciente in pacientes %}
+            {% for especialista in especialistas %}
             <tr>
-                <td>{{ paciente.nombre|default:"" }}</td>
-                <td>{{ paciente.apellido|default:"" }}</td>
-                <td>{{ paciente.dui|default:"" }}</td>
-                <td>{{ paciente.correo|default:"" }}</td>
-                <td>{{ paciente.telefono|default:"" }}</td>
-                <td>{{ paciente.direccion|default:"" }}</td>
-                <td>{{ paciente.fecha_ingreso|date:"Y-m-d"|default:"" }}</td>
+                <td>{{ especialista.nombre }}</td>
+                <td>{{ especialista.apellido }}</td>
+                <td>{{ especialista.especialidad }}</td>
+                <td>{{ especialista.telefono }}</td>
+                <td>{{ especialista.correo }}</td>
+                <td>{{ especialista.dui }}</td>
                 <td>
-                    
+
                     <!-- Botón de editar -->
-                    <form method="post" action="{% url 'edicionpaciente' paciente.id %}" style="display:inline;">
+                    <form method="post" action="{% url 'edicionespecialista' especialista.id %}"
+                        style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary">Editar</button>
                     </form>
 
+
                     <!-- Botón de eliminar -->
-                    <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" style="display:inline;">
+                    <form method="post" action="{% url 'eliminarespecialista' especialista.id %}"
+                        style="display:inline;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm"
-                            onclick="return confirm('¿Estás seguro que deseas eliminar este paciente?');">Eliminar</button>
+                            onclick="return confirm('¿Estás seguro que deseas eliminar este especialista?');">Eliminar</button>
                     </form>
-
 
 
                 </td>
@@ -154,7 +162,7 @@
 
     <script>
         $(document).ready(function () {
-            $('#pacientesTable').DataTable({
+            $('#especialistasTable').DataTable({
                 language: {
                     url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
                 },
