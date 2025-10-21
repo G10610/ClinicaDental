@@ -22,27 +22,12 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'crudpacientes' %}">Pacientes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'crudespecialistas' %}">Especialistas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'logout' %}">Cerrar Sesion</a>
-                    </li>
-                    {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'signup' %}">Registrarse</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'login' %}">Iniciar Sesion</a>
                     </li>
-                    {% endif %}
                 </ul>
             </div>
         </div>

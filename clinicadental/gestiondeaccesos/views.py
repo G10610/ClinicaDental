@@ -6,8 +6,10 @@ from django.db import IntegrityError
 
 User = get_user_model()
 
+@login_required
 def home(request):
     return render(request, 'home.html')
+
 
 def signup(request):
     if request.method == 'GET':
@@ -38,7 +40,7 @@ def index(request):
 @login_required
 def cerrarsesion(request):
     logout(request)
-    return redirect(home)
+    return redirect(iniciarsesion)
 
 def iniciarsesion(request):
     if request.method == 'GET':

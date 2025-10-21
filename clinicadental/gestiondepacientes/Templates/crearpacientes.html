@@ -24,9 +24,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/">Inicio</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'crudpacientes' %}">Pacientes</a>
-                    </li>
+                    
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Cerrar Sesion</a>
                     </li>
@@ -47,9 +45,32 @@
             <div class="col-md-4 offset-md-4 mt-5">
                 <form method="POST" class="card card-body">
                     <h1 class="text-center">Ingresar Paciente</h1>
-                    {{error}}
-                    {% csrf_token %}
-                    {{form.as_p}}
+                   {% csrf_token %}
+
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            
+                            {{ field.label }}
+                            {% if field.field.required %}
+                            <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        
+                        {{ field }}
+                        
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                                <span class="text-danger small d-block">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
                     <button class="btn btn-primary">
                         Crear
                     </button>
