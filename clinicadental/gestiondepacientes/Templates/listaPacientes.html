@@ -8,9 +8,9 @@
 
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">Gestión de Pacientes</h1>
+        <h1 class="h3 mb-0">Gestión de Pacientes</h1>
         <div class="d-flex align-items-center">
-            <a href="{% url 'crearpacientes' %}" class="btn btn-registrar">Registrar Paciente</a>
+            <a href="{% url 'crearpacientes' %}" class="btn btn-primario">Registrar Paciente</a>
         </div>
     </div>
 
@@ -66,9 +66,10 @@
         $(document).ready(function () {
             $('#pacientesTable').DataTable({
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+                    url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
                 },
                 responsive: true,
+                order: [[2, 'desc']]
             });
         });
     </script>
