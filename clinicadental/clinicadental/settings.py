@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'gestionespecialistas',
     'gestiondeaccesos',
     'gestiondepacientes',
+    'gestiontratamientos'
 ]
 
 MIDDLEWARE = [

@@ -38,6 +38,14 @@
                     </a>
                 </li>
 
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'especialistas' in request.path %}active{% endif %}" href="{% url 'lista_tratamientosss' %}">
+                        <i class="bi bi-person-badge me-2"></i> Tratamientos
+                    </a>
+                </li>
+
+
                 <li class="nav-item">
                     <a class="nav-link" href="#"><i class="bi bi-gear-fill me-2"></i> Configuración</a>
                 </li>
