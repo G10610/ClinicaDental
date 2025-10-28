@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Paciente{% endblock %}
+
+{% block content %}
+<div class="form-page d-flex justify-content-center align-items-start mt-4 ">
+    <div class="form-wrapper bg-white shadow p-4">
+        <h1 class="text-center mb-4">Editar Paciente</h1>
+        
+        {% if messages %}
+        <div class="alert alert-success" role="alert">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form action="{% url 'editartratamiento' %}" method="POST">
+            {% csrf_token %}
+            
+            <input type="hidden" name="id" value="{{ tratamiento.id }}">
+
+            <div class="row g-3">
+                
+                <div class="col-12 col-md-6">
+                    <label for="nombre" class="form-label">
+                        Nombre: <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" id="nombre" name="nombre" value="{{ tratamiento.nombre|default:'' }}"
+                           class="form-control" required maxlength="100" pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+"
+                           oninvalid="this.setCustomValidity('Por favor, utilice solo letras')"
+                           oninput="this.setCustomValidity('')">
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label for="descripcion" class="form-label">
+                        Apellido: <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" id="descripcion" name="descripcion" value="{{ tratamiento.descripcion|default:'' }}"
+                           class="form-control" required maxlength="100"
+                           oninput="this.setCustomValidity('')">
+                </div>
+
+
+
+<div class="col-12 col-md-6">
+    <label for="costo_referencia" class="form-label">
+        Costo: <span class="text-danger">*</span>
+    </label>
+    <input type="number" id="costo_referencia" name="costo_referencia" 
+           value="{{ tratamiento.costo_referencia|stringformat:'.2f' }}"
+           class="form-control" required 
+           min="0" max="5000" step="0.01"
+           placeholder="$"
+           oninvalid="this.setCustomValidity('El precio debe ser entre 0 y 5000')"
+           oninput="this.setCustomValidity('')">
+</div>
+
+<!-- DURACIÓN -->
+<div class="col-12 col-md-6">
+    <label for="duracion_minutos" class="form-label">
+        Duración en minutos: <span class="text-danger">*</span>
+    </label>
+    <input type="number" id="duracion_minutos" name="duracion_minutos" 
+           value="{{ tratamiento.duracion_minutos }}"
+           class="form-control" required 
+           min="1" max="5000"
+           placeholder="Ej: 60"
+           oninvalid="this.setCustomValidity('Los minutos deben ser entre 1 y 5000')"
+           oninput="this.setCustomValidity('')">
+</div>
+
+
+            </div>
+
+            <div class="mt-4 text-end">
+                <button type="submit" class="btn btn-primario px-4">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+
+{% endblock %}

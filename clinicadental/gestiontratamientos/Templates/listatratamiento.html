@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Gestión de Tratamientos
+{% endblock %}
+
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Gestión de Tratamientos</h1>
+        <div class="d-flex align-items-center">
+            <a href="{% url 'crear_tratamiento' %}" class="btn btn-primario">Registrar Tratamiento</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            
+        <table id="tratamientosTable" class="table table-hover align-middle" style="width:100%">
+            <thead>
+                <tr>
+
+                    <th>Nombre</th>
+                    <th>Descripcion</th>
+                    <th>Costo($)</th>
+                    <th>Duracion en minutos</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+                </thead>
+            <tbody>
+                {% for tratamiento in tratamiento %}
+                <tr>
+                   
+                    <td>{{ tratamiento.nombre }}</td>
+                    <td>{{ tratamiento.descripcion }}</td>
+                    <td>{{ tratamiento.costo_referencia }}</td>
+                    <td>{{ tratamiento.duracion_minutos }}</td>
+
+
+
+                    
+                    <td class="text-center">
+                        
+                        <a href="{% url 'ediciontratamiento' tratamiento.id %}" class="btn btn-sm btn-modificar">Modificar</a>
+                        
+<form method="post" action="{% url 'eliminartratamiento' tratamiento.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-borrar" onclick="return confirm('¿Estás seguro de que deseas eliminar a este paciente?');">Borrar</button>
+                        </form>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block scripts %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#tratamientosTable').DataTable({
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+                },
+                responsive: true,
+                order: [[2, 'desc']]
+            });
+        });
+    </script>
+{% endblock %}
