@@ -3,7 +3,7 @@ from . import views
 
 
 urlpatterns = [
-    path('', views.crudpacientes, name='crudpacientes'),
+    
     path('lista/', views.lista, name='lista'),
     
     # crud
@@ -17,7 +17,6 @@ urlpatterns = [
     # Procesa los datos modificados y guarda los cambios (POST)
     # Es la acción del formulario dentro de la página de edición.
     path('editarpaciente/', views.editarPaciente, name='editarpaciente'), 
-
 
     path('eliminar/<int:id>/', views.eliminar_paciente, name='eliminarpaciente'),
 ]

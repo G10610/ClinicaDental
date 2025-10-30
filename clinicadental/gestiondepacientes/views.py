@@ -5,10 +5,6 @@ from . models import Paciente
 
 # funciones de gestion CRUD
 
-@login_required
-def crudpacientes(request):
-    """Muestra la página principal de gestión de pacientes (dashboard o menú)."""
-    return render(request, 'gestionpacientes.html')
 
 @login_required
 def lista(request):
