@@ -37,15 +37,24 @@
                     <td>{{ paciente.correo|default:"" }}</td>
                     <td>{{ paciente.telefono|default:"" }}</td>
 
-                    <td class="text-center">
-                        
-                        <a href="{% url 'edicionpaciente' paciente.id %}" class="btn btn-sm btn-modificar">Modificar</a>
-                        
-                        <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-borrar" onclick="return confirm('¿Estás seguro de que deseas eliminar a este paciente?');">Borrar</button>
-                        </form>
-                    </td>
+<td class="text-center">
+    <div class="d-flex flex-column gap-1">
+        <!-- Fila 1 -->
+        <div class="d-flex gap-1 justify-content-center">
+            <a href="{% url 'edicionpaciente' paciente.id %}" class="btn btn-sm btn-warning">Modificar</a>
+            <a href="{% url 'expediente_paciente' paciente.id %}" class="btn btn-sm btn-info">📋 Exp.</a>
+        </div>
+        <!-- Fila 2 -->
+        <div class="d-flex justify-content-center">
+            <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar a este paciente?');">
+                    Borrar
+                </button>
+            </form>
+        </div>
+    </div>
+</td>
                 </tr>
                 {% endfor %}
             </tbody>

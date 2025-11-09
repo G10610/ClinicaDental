@@ -3,6 +3,7 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import Paciente
+from .models import PacienteTratamiento
 
 # Validadores de servidor seguridad extra
 dui_validator = RegexValidator(
@@ -78,5 +79,18 @@ class PacienteForm(forms.ModelForm):
         if fecha and fecha > timezone.localdate():  # se usa la fecha local según TIME_ZONE del settings.py
             raise forms.ValidationError('La fecha de ingreso no puede ser futura.')
         return fecha
+    
+
+
+
+class ExpedienteForm(forms.ModelForm):
+    class Meta:
+        model = PacienteTratamiento
+        fields = ['tratamiento', 'especialista', 'fecha_inicio', 'fecha_fin', 'estado', 'notas']
+        widgets = {
+            'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'fecha_fin': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'notas': forms.Textarea(attrs={'rows': 3}),
+        }
     
     
