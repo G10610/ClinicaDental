@@ -3,6 +3,9 @@ from .forms import PacienteForm
 from django.contrib.auth.decorators import login_required
 from . models import Paciente
 
+from .models import Paciente, PacienteTratamiento
+from .forms import ExpedienteForm
+
 # funciones de gestion CRUD
 
 
@@ -65,3 +68,52 @@ def eliminar_paciente(request, id):
     paciente = get_object_or_404(Paciente, pk=id) # También se recomienda usar get_object_or_404 aquí
     paciente.delete()
     return redirect('lista')
+
+
+
+
+
+
+#EXPEDINETE DE PACIENTE
+def expediente_paciente(request, paciente_id):
+    paciente = get_object_or_404(Paciente, id=paciente_id)
+    
+    # Obtener todos los expedientes del paciente
+    expedientes = PacienteTratamiento.objects.filter(
+        paciente=paciente
+    ).select_related('tratamiento', 'especialista')
+    
+    # Formulario para agregar nuevo tratamiento al paciente
+    if request.method == 'POST':
+        form = ExpedienteForm(request.POST)
+        if form.is_valid():
+            expediente = form.save(commit=False)
+            expediente.paciente = paciente  # Asignar automáticamente el paciente
+            expediente.save()
+            return redirect('expediente_paciente', paciente_id=paciente.id)
+    else:
+        form = ExpedienteForm(initial={'paciente': paciente})
+    
+    context = {
+        'paciente': paciente,
+        'expedientes': expedientes,
+        'form': form,
+    }
+    
+    return render(request, 'expediente_paciente.html', context)
+
+
+
+#ELIMINAR TRATAMIENTO ASIGNADO A PACIENTE
+
+def eliminar_expediente(request, expediente_id):
+    expediente = get_object_or_404(PacienteTratamiento, id=expediente_id)
+    paciente_id = expediente.paciente.id
+    
+    if request.method == 'POST':
+        expediente.delete()
+        return redirect('expediente_paciente', paciente_id=paciente_id)
+    
+    # Si es GET, eliminar directamente (sin confirmación)
+    expediente.delete()
+    return redirect('expediente_paciente', paciente_id=paciente_id)

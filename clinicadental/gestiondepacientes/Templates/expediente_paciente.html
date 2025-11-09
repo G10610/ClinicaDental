@@ -1,0 +1,133 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <!-- Información del paciente -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Expediente de: {{ paciente.nombre }}</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> {{ paciente.correo }}</p>
+                    <p><strong>Teléfono:</strong> {{ paciente.telefono }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Dirección:</strong> {{ paciente.direccion }}</p>
+                    <p><strong>Fecha de registro:</strong> {{ paciente.fecha_ingreso|date:"d/m/Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="mb-3">
+        <a href="{% url 'lista' %}" class="btn btn-secondary">← Volver a Pacientes</a>
+        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#nuevoTratamiento">
+            + Agregar Tratamiento
+        </button>
+    </div>
+
+    <!-- Formulario para agregar tratamiento (colapsable) -->
+    <div class="collapse mb-4" id="nuevoTratamiento">
+        <div class="card">
+            <div class="card-header">
+                <h5>Asignar Nuevo Tratamiento</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.tratamiento.label_tag }}
+                                {{ form.tratamiento }}
+                            </div>
+                            <div class="form-group">
+                                {{ form.especialista.label_tag }}
+                                {{ form.especialista }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.fecha_inicio.label_tag }}
+                                {{ form.fecha_inicio }}
+                            </div>
+                            <div class="form-group">
+                                {{ form.estado.label_tag }}
+                                {{ form.estado }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ form.notas.label_tag }}
+                        {{ form.notas }}
+                    </div>
+                    <button type="submit" class="btn btn-success">Guardar Tratamiento</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de tratamientos del paciente -->
+    <div class="card">
+        <div class="card-header">
+            <h5>Tratamientos Asignados</h5>
+        </div>
+        <div class="card-body">
+            {% if expedientes %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Tratamiento</th>
+                            <th>Especialista</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Estado</th>
+                            <th>Notas</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expediente in expedientes %}
+                        <tr>
+                            <td>{{ expediente.tratamiento.nombre }}</td>
+                            <td>{{ expediente.especialista.nombre }}</td>
+                            <td>{{ expediente.fecha_inicio|date:"d/m/Y" }}</td>
+                            <td>{{ expediente.fecha_fin|date:"d/m/Y"|default:"-" }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if expediente.estado == 'COMPLETADO' %}bg-success
+                                    {% elif expediente.estado == 'EN_PROCESO' %}bg-primary
+                                    {% elif expediente.estado == 'PENDIENTE' %}bg-warning
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ expediente.estado }}
+                                </span>
+                            </td>
+                            <td>{{ expediente.notas|truncatewords:5|default:"-" }}</td>
+                            <td>
+ <!-- Formulario para eliminar directamente -->
+    <form method="post" action="{% url 'eliminar_expediente' expediente.id %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-danger" 
+                onclick="return confirm('¿Eliminar este tratamiento?')">
+            Eliminar
+        </button>
+    </form>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                Este paciente no tiene tratamientos asignados.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
