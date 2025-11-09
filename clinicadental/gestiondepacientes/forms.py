@@ -2,8 +2,6 @@ from django import forms
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-
-
 from .models import Paciente
 
 # Validadores de servidor seguridad extra
