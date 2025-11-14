@@ -1,0 +1,157 @@
+<form id="form-crear-cita" method="POST" action="{% url 'crear_cita' %}">
+    {% csrf_token %}
+    
+    <div class="row g-3">
+        
+<div class="col-md-6 position-relative mb-3" id="contenedor-buscar-paciente"> 
+        <label for="buscarPaciente" class="form-label">
+            Buscar paciente: <span class="text-danger">*</span>
+        </label>
+        <input type="text" id="buscarPaciente" name="buscarPaciente" placeholder="Buscar paciente..."
+            autocomplete="off"class="form-control" >
+        <input type="hidden" id="paciente_id" name="paciente_id" required>
+        
+        <div id="resultadosPacientes" 
+                class="list-group position-absolute w-100" 
+                style="z-index: 1050;"> 
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3 d-flex align-items-end justify-content-start">
+        <div class="form-check form-switch pt-2">
+            <input class="form-check-input" type="checkbox" id="check-nuevo-paciente" name="check-nuevo-paciente">
+            <label class="form-check-label" for="check-nuevo-paciente">
+                Registrar nuevo paciente
+            </label>
+        </div>
+    </div>
+
+    <div class="row g-3" id="campos-nuevo-paciente" style="display: none;">
+                <!-- NOMBRE -->
+        <div class="col-md-6">
+            <label for="nuevo_paciente_nombre" class="form-label">Nombre:</label>
+            <input type="text" id="nuevo_paciente_nombre" name="nombre" class="form-control"
+                pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$"
+                title="Solo se permiten letras"
+                oninvalid="
+                        if (this.value === '') {
+                            this.setCustomValidity('Por favor, complete este campo.');
+                        } else {
+                            this.setCustomValidity('El nombre solo puede contener letras y espacios.');
+                        }"
+                oninput="this.setCustomValidity('')">
+        </div>
+
+        <!-- APELLIDO -->
+        <div class="col-md-6">
+            <label for="nuevo_paciente_apellido" class="form-label">Apellido:</label>
+            <input type="text" id="nuevo_paciente_apellido" name="apellido" class="form-control"
+                pattern="^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$"
+                title="Solo se permiten letras"
+                oninvalid="
+                        if (this.value === '') {
+                            this.setCustomValidity('Por favor, complete este campo.');
+                        } else {
+                            this.setCustomValidity('El apellido solo puede contener letras y espacios.');
+                        }"
+                oninput="this.setCustomValidity('')">
+        </div>
+
+        <!-- TELÉFONO -->
+        <div class="col-md-6">
+            <label for="nuevo_paciente_telefono" class="form-label">Teléfono (opcional):</label>
+            <input type="tel" id="nuevo_paciente_telefono" name="telefono" class="form-control"
+                placeholder="+503 1234-5678"
+                pattern="^\+?\d[\d\- ]{7,14}$"
+                title="El teléfono debe tener entre 8 y 15 caracteres, solo números, espacios o guiones."
+                oninvalid="this.setCustomValidity('El teléfono debe tener entre 8 y 15 caracteres, solo números, espacios o guiones.')"
+                oninput="this.setCustomValidity('')">
+        </div>
+
+        <div class="col-md-6">
+            <label for="dui" class="form-label">
+                Dui (opcional):
+            </label>
+            <input type="text" id="id_dui" name="dui" class="form-control"
+                pattern="^\d{8}-\d{1}$"
+                oninvalid="this.setCustomValidity('Por favor, use el formato: ########-#')"
+                oninput="this.setCustomValidity('')">
+        </div>
+
+    </div>
+
+
+        <div class="col-md-6">
+            <label class="form-label">Especialista:</label>
+            <p class="form-control-plaintext fw-semibold mb-0">
+                {% for e in especialistas %}
+                    {% if e.id|stringformat:"s" == initial_data.especialista_id %}
+                        {{ e.nombre }} {{ e.apellido }}
+                    {% endif %}
+                {% endfor %}
+            </p>
+            <small class="form-text text-muted">
+                {% for e in especialistas %}
+                    {% if e.id|stringformat:"s" == initial_data.especialista_id %}
+                        {{ e.especialidad }}
+                    {% endif %}
+                {% endfor %}
+            </small>
+            <input type="hidden" name="especialista_id" value="{{ initial_data.especialista_id }}">
+        </div>
+
+        
+        <div class="col-md-6">
+        <label for="tratamiento" class="form-label">Tratamiento:</label>
+        <select id="tratamiento" name="tratamiento_id" class="form-select" required>
+            <option value="" disabled selected>Selecciona...</option>
+            {% for t in tratamientos %}
+            <option value="{{ t.id }}" data-duracion="{{ t.duracion_minutos }}">{{ t.nombre }}</option>
+            {% endfor %}
+        </select>
+        <small id="duracion-tratamiento" class="form-text text-muted">
+        Duración aproximada: <span id="duracion-minutos">—</span>
+        </small>
+        </div>
+
+                
+        <div class="col-md-6">
+            <label class="form-label">Fecha:</label>
+            <p class="form-control-plaintext fw-semibold">
+                {{ initial_data.fecha_legible }}
+            </p>
+            <input type="hidden" name="fecha" value="{{ initial_data.fecha }}">
+        </div>
+        
+        <div class="col-md-6">
+            <label for="hora" class="form-label">Hora:</label>
+            <select id="hora" name="hora" class="form-select" required>
+                <option value="" disabled selected>Seleccione una hora disponible...</option>
+                
+                {% for slot in slots_disponibles %}
+                    <option value="{{ slot|time:'H:i' }}">{{ slot|time:'h:i A' }}</option>
+                {% empty %}
+                    <option value="" disabled>No hay horas disponibles para este día.</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label for="detalles" class="form-label">Detalles (Opcional):</label>
+            <textarea id="detalles" name="detalles" class="form-control" rows="3"></textarea>
+        </div>
+        
+    </div>
+
+    <div class="modal-footer-contenido mt-4 text-end">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-primario" form="form-crear-cita">Guardar Cita</button>
+    </div>
+
+</form>
+
+
+
+
+
+

@@ -45,15 +45,13 @@
 
                 <div class="col-12 col-md-6">
                     <label for="dui" class="form-label">
-                        DUI: <span class="text-danger">*</span>
+                        DUI:
                     </label>
                     <input type="text" id="dui" name="dui" value="{{ paciente.dui|default:'' }}"
-                           class="form-control" required pattern="^\d{8}-\d{1}$"
+                           class="form-control" pattern="^\d{8}-\d{1}$"
                            title="Formato: 12345678-9"
-                           readonly
                            oninvalid="this.setCustomValidity('Por favor, use el formato: 06040342-0')"
-                           oninput="this.setCustomValidity('')"
-                           style="background-color: #e9ecef; color: #6c757d;">
+                           oninput="this.setCustomValidity('')">
                 </div>
 
                 <div class="col-12 col-md-6">

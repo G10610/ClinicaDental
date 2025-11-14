@@ -18,11 +18,11 @@
             <div class="sidebar-header">
                 <img src="{% static 'img/logo.png' %}" alt="Logo MMDentist" class="sidebar-logo">
             </div>
-            <ul class="nav flex-column">
+           <ul class="nav flex-column">
                 
                 <li class="nav-item">
-                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
-                        <i class="bi bi-house-door-fill me-2"></i> Inicio
+                    <a class="nav-link {% if active_page == 'agenda' %}active{% endif %}" href="{% url 'agenda' %}">
+                        <i class="bi bi-calendar-event-fill me-2"></i> Agenda
                     </a>
                 </li>
 
@@ -33,21 +33,19 @@
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link {% if 'especialistas' in request.path %}active{% endif %}" href="{% url 'listae' %}">
+                    <a class="nav-link {% if 'gestionee' in request.path %}active{% endif %}" href="{% url 'listae' %}">
                         <i class="bi bi-person-badge me-2"></i> Especialistas
                     </a>
                 </li>
 
-
                 <li class="nav-item">
-                    <a class="nav-link {% if 'especialistas' in request.path %}active{% endif %}" href="{% url 'lista_tratamientosss' %}">
-                        <i class="bi bi-person-badge me-2"></i> Tratamientos
+                    <a class="nav-link {% if 'tratamientos' in request.path %}active{% endif %}" href="{% url 'lista_tratamientosss' %}">
+                        <i class="bi bi-list-ul me-2"></i> Tratamientos
                     </a>
                 </li>
 
-
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-gear-fill me-2"></i> Configuración</a>
+                <li class="nav-item" >
+                    <a class="nav-link {% if 'configuracion' in request.path %}active{% endif %}" href="{% url 'gestionar_configuracion' %}"><i class="bi bi-gear-fill me-2"></i> Configuración</a>
                 </li>
             </ul>
         </div>
