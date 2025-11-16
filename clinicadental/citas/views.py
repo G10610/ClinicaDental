@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from datetime import date, time, datetime, timedelta
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -13,6 +13,9 @@ from django.utils import timezone
 from configuracion.models import ConfiguracionClinica
 from django.utils import formats
 from django.db.models.functions import Concat
+import json
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 
 
 @login_required
@@ -25,7 +28,7 @@ def agenda(request):
         try:
             especialista_seleccionado_id = int(especialista_id_str)
         except ValueError:
-            pass  # Ignora si no es número
+            pass 
 
     lista_especialistas = Especialista.objects.all()
 
@@ -46,7 +49,7 @@ def crear_cita(request):
     if request.method == "POST":
         registrar_nuevo = request.POST.get('check-nuevo-paciente') == 'on'
 
-        # 🔹 Paso 1: determinar el paciente
+        #Determinar el paciente
         if registrar_nuevo:
             form_data = {
                 'nombre': request.POST.get('nombre'),
@@ -71,7 +74,7 @@ def crear_cita(request):
             except Paciente.DoesNotExist:
                 return JsonResponse({'error': 'Paciente no encontrado.'}, status=400)
 
-        # 🔹 Paso 2: validar fecha y hora
+        # Validar fecha y hora
         fecha_str = request.POST.get('fecha')
         hora_str = request.POST.get('hora')
 
@@ -86,107 +89,166 @@ def crear_cita(request):
         except Exception as e:
             return JsonResponse({'error': f'Error en la fecha/hora: {e}'}, status=400)
 
-        # 🔹 Paso 3: verificar si ya hay una cita a esa hora con ese especialista
+        #Validar solapamientos
         especialista_id = request.POST.get('especialista_id')
-        cita_existente = Cita.objects.filter(
-            especialista_id=especialista_id,
-            fecha_hora=aware_dt
-        ).exists()
+        tratamiento_id = request.POST.get('tratamiento_id')
 
-        if cita_existente:
-            return JsonResponse({'error': 'Esa hora ya está ocupada para el especialista seleccionado.'}, status=400)
+        if not tratamiento_id:
+            return JsonResponse({'error': 'Debe seleccionar un tratamiento.'}, status=400)
 
-        # 🔹 Paso 4: crear la cita
+        try:
+            tratamiento = Tratamiento.objects.get(id=tratamiento_id)
+        except Tratamiento.DoesNotExist:
+            return JsonResponse({'error': 'Tratamiento inválido.'}, status=400)
+
+        duracion = getattr(tratamiento, 'duracion_minutos', None)
+        try:
+            duracion = int(duracion) if duracion is not None else 30
+        except (ValueError, TypeError):
+            duracion = 30
+
+        inicio_nueva = aware_dt
+        fin_nueva = aware_dt + timedelta(minutes=duracion)
+
+        citas_existentes = Cita.objects.filter(especialista_id=especialista_id)
+
+        for cita in citas_existentes:
+            dur_cita = 30
+            if cita.tratamiento and getattr(cita.tratamiento, 'duracion_minutos', None):
+                try:
+                    dur_cita = int(cita.tratamiento.duracion_minutos)
+                except (ValueError, TypeError):
+                    dur_cita = 30
+
+            inicio_cita = cita.fecha_hora
+            fin_cita = inicio_cita + timedelta(minutes=dur_cita)
+
+            if inicio_nueva < fin_cita and inicio_cita < fin_nueva:
+                return JsonResponse({
+                    'error': 'Existe una cita que se superpone con ese horario.'
+                }, status=400)
+
+
+        # Crear la cita
         Cita.objects.create(
             paciente=nuevo_paciente,
             especialista_id=especialista_id,
             tratamiento_id=request.POST.get('tratamiento_id'),
             fecha_hora=aware_dt,
-            detalles=request.POST.get('detalles', '')
+            detalles=request.POST.get('detalles', ''),
+            estado='Confirmada'
         )
 
         return JsonResponse({'success': True})
 
-    # 🔹 Método GET → construir formulario y horas disponibles
+    # Método GET: Construir formulario
     else:
         config = ConfiguracionClinica.objects.first()
         if not config:
-            config = ConfiguracionClinica.objects.create()
+            ConfiguracionClinica.objects.create()
+            config = ConfiguracionClinica.objects.first()
 
         fecha_str = request.GET.get('fecha')
+        hora_str = request.GET.get('hora')
         especialista_id = request.GET.get('especialista_id')
 
-        fecha_legible = "" # Valor por defecto
-        if fecha_str:
-            try:
-                # 1. Convertimos el string "2025-11-05" a un objeto fecha
-                fecha_obj = datetime.fromisoformat(fecha_str).date()
-                
-                # 2. Usamos Django para formatearlo en español
-                # "l" = día (Miércoles), "j" = 5, "F" = noviembre, "Y" = 2025
-                # El \d\e es para escapar "de" y que no se interprete como formato
-                fecha_legible = formats.date_format(fecha_obj, "l j \d\e F \d\e Y")
-                
-                # 3. Capitalizamos (suele salir "miércoles", lo queremos "Miércoles")
-                fecha_legible = fecha_legible.capitalize()
-            except (ValueError, TypeError):
-                fecha_legible = "Fecha inválida" # Por si algo falla
-
         slots_disponibles = []
-        local_tz = timezone.get_current_timezone()
+        view_mode = 'weekly'
 
-        if especialista_id and fecha_str:
+        if not hora_str:
+            # Vista de agenda diaria
+            view_mode = 'daily'
+            
+            hora_str = config.hora_apertura.strftime('%H:%M')
+            
+            # Generar lista de slots cada 15 MINUTOS
             try:
-                # 1️⃣ Generar todas las horas posibles
-                slots_posibles = []
-                hora_actual = datetime.combine(datetime.today(), config.hora_apertura)
-                hora_fin = datetime.combine(datetime.today(), config.hora_cierre)
-                intervalo = timedelta(minutes=config.intervalo_citas)
+                hora_actual = datetime.combine(date.today(), config.hora_apertura)
+                hora_fin = datetime.combine(date.today(), config.hora_cierre)
+                intervalo = timedelta(minutes=15) 
 
                 while hora_actual < hora_fin:
-                    slots_posibles.append(hora_actual.time())
+                    slots_disponibles.append(hora_actual.time())
                     hora_actual += intervalo
+            except Exception as e:
+                print("Error generando slots para agenda diaria:", e)
 
-                # 2️⃣ Crear un RANGO de 24h en tu zona horaria local
-                fecha_local = datetime.fromisoformat(fecha_str).date()
+
+        fecha_legible = "" 
+        if fecha_str:
+            try:
+                fecha_obj = datetime.fromisoformat(fecha_str).date()
                 
-                # Creamos datetimes "ingenuos" (naive)
-                naive_dia_inicio = datetime.combine(fecha_local, datetime.min.time())
-                naive_dia_fin = datetime.combine(fecha_local, datetime.max.time())
-
-                # Usamos 'make_aware' (la forma correcta) en lugar de 'localize'
-                dia_inicio = timezone.make_aware(naive_dia_inicio, local_tz)
-                dia_fin = timezone.make_aware(naive_dia_fin, local_tz)
+                # El \d\e es para escapar "de"
+                fecha_legible = formats.date_format(fecha_obj, "l j \d\e F \d\e Y")
                 
+                fecha_legible = fecha_legible.capitalize()
+            except (ValueError, TypeError):
+                fecha_legible = "Fecha inválida"
 
-                # 2️⃣ Obtener citas existentes (UTC → convertir a local)
-                citas_ese_dia = Cita.objects.filter(
-                    especialista_id=especialista_id, 
-                    fecha_hora__range=(dia_inicio, dia_fin) # <-- ¡FILTRO CORREGIDO!
-                )
+            slots_disponibles = []
+            local_tz = timezone.get_current_timezone()
+            if especialista_id and fecha_str:
+                try:
+                    intervalo_min = 15
+                    intervalo_td = timedelta(minutes=intervalo_min)
 
-                citas_ocupadas_set = set()
-                for cita in citas_ese_dia:
-                    hora_local = cita.fecha_hora.astimezone(local_tz).time() # ej. time(8, 0)
-                    citas_ocupadas_set.add(hora_local)
+                    # 1. Generar todos los slots posibles del día
+                    slots_posibles = []
+                    hora_actual = datetime.combine(
+                        datetime.today(), config.hora_apertura)
+                    hora_fin = datetime.combine(
+                        datetime.today(), config.hora_cierre)
 
-                for cita in citas_ese_dia:
-                    hora_local = cita.fecha_hora.astimezone(local_tz)
-                    hora_normalizada = hora_local.replace(second=0, microsecond=0).time()
-                    citas_ocupadas_set.add(hora_normalizada)
+                    while hora_actual < hora_fin:
+                        slots_posibles.append(hora_actual.time())
+                        hora_actual += intervalo_td
 
-                # 6. Filtrar la lista: quitar las horas ocupadas
-                for slot in slots_posibles:
-                    if slot not in citas_ocupadas_set: 
-                        slots_disponibles.append(slot)
+                    # 2. Obtener citas existentes
+                    fecha_local = datetime.fromisoformat(fecha_str).date()
+                    dia_inicio = timezone.make_aware(
+                        datetime.combine(fecha_local, time.min), local_tz)
+                    dia_fin = timezone.make_aware(
+                        datetime.combine(fecha_local, time.max), local_tz)
 
-            except (ValueError, TypeError) as e:
-                print("Error generando slots:", e)
-                slots_disponibles = []
+                    citas_ese_dia = Cita.objects.filter(
+                        especialista_id=especialista_id,
+                        fecha_hora__range=(dia_inicio, dia_fin)
+                    ).select_related('tratamiento') # Importante incluir tratamiento
+
+                    # 3. Crear un set con TODOS los slots ocupados
+                    citas_ocupadas_set = set()
+                    for cita in citas_ese_dia:
+                        hora_inicio_cita = cita.fecha_hora.astimezone(
+                            local_tz).time()
+
+                        duracion_real = 30 
+                        if cita.tratamiento and cita.tratamiento.duracion_minutos:
+                            duracion_real = cita.tratamiento.duracion_minutos
+
+                        # Redondea hacia arriba
+                        num_slots = int(duracion_real // intervalo_min)
+                        if duracion_real % intervalo_min > 0:
+                            num_slots += 1
+
+                        temp_dt = datetime.combine(date.today(), hora_inicio_cita)
+                        for i in range(num_slots):
+                            citas_ocupadas_set.add(temp_dt.time())
+                            temp_dt += intervalo_td
+
+                    # 4. Filtrar la lista
+                    for slot in slots_posibles:
+                        if slot not in citas_ocupadas_set:
+                            slots_disponibles.append(slot)
+
+                except (ValueError, TypeError) as e:
+                    print("Error generando slots:", e)
+                    slots_disponibles = []
 
         initial_data = {
             'especialista_id': especialista_id,
             'fecha': fecha_str,
+            'hora': hora_str,
             'fecha_legible': fecha_legible
         }
 
@@ -195,6 +257,7 @@ def crear_cita(request):
             'tratamientos': tratamientos,
             'initial_data': initial_data,
             'slots_disponibles': slots_disponibles,
+            'view_mode': view_mode
         }
         return render(request, 'form_cita.html', context)
 
@@ -204,10 +267,8 @@ def buscar_pacientes(request):
     if len(q) < 2:
         return JsonResponse([], safe=False)
 
-    # Normalizamos el término de búsqueda
-    q = " ".join(q.split())  # elimina espacios extra
+    q = " ".join(q.split()) 
 
-    # Anotamos el campo "nombre_completo" para comparar nombre + apellido juntos
     pacientes = (
         Paciente.objects.annotate(
             nombre_completo=Concat('nombre', Value(' '), 'apellido')
@@ -229,20 +290,13 @@ def buscar_pacientes(request):
 
 @login_required
 def api_get_citas(request):
-    """
-    Esta vista devuelve las citas de un día y especialista
-    específicos en formato JSON.
-    """
-    # 1. Obtener los parámetros del 'fetch' de JavaScript
     fecha_str = request.GET.get('fecha')
     especialista_id = request.GET.get('especialista_id')
 
-    # 2. Validar que tenemos los datos necesarios
     if not especialista_id or not fecha_str:
         return JsonResponse({'error': 'Faltan parámetros'}, status=400)
 
-    # 3. Usamos la MISMA lógica de filtro de zona horaria que en 'crear_cita'
-    #    (Esto es crucial para que coincidan)
+    # Usar la misma lógica de filtro de zona horaria
     lista_citas_obj = []
     local_tz = timezone.get_current_timezone()
     try:
@@ -250,49 +304,45 @@ def api_get_citas(request):
         dia_inicio = timezone.make_aware(datetime.combine(fecha_local, datetime.min.time()), local_tz)
         dia_fin = timezone.make_aware(datetime.combine(fecha_local, datetime.max.time()), local_tz)
 
-        # 4. Consultar la base de datos
         lista_citas_obj = Cita.objects.filter(
             especialista_id=especialista_id, 
             fecha_hora__range=(dia_inicio, dia_fin)
         ).select_related(
-            'paciente', 'tratamiento' # Optimización para no golpear la BD
+            'paciente', 'tratamiento' # Optimización
         ).order_by(
-            'fecha_hora' # ¡Como pediste!
+            'fecha_hora'
         )
 
     except (ValueError, TypeError) as e:
         print("Error en api_get_citas:", e)
-        # Devolvemos una lista vacía si hay un error
         return JsonResponse({'citas': []})
 
-    # 5. Convertir los objetos de Django en un JSON simple
     citas_json = []
     for cita in lista_citas_obj:
-        # Convertimos la hora UTC de la BD a la hora local para mostrarla
+        # Convertir UTC a hora local
         hora_local = cita.fecha_hora.astimezone(local_tz)
         
         citas_json.append({
             'id': cita.id,
-            'hora': hora_local.strftime('%I:%M %p'), # Formato: "09:30 AM"
+            'hora': hora_local.strftime('%I:%M %p'),
             'paciente_nombre': f"{cita.paciente.nombre} {cita.paciente.apellido}",
             'tratamiento_nombre': cita.tratamiento.nombre if cita.tratamiento else 'N/A',
-            'estado': cita.estado or 'Pendiente', # Usar 'Pendiente' si está vacío
+            'paciente_id': cita.paciente.id,
+            'paciente_telefono': cita.paciente.telefono or '',
+            'estado': cita.estado or 'Pendiente',
         })
 
     return JsonResponse({'citas': citas_json})
 
 
 def agenda_semanal(request):
-    # Fecha base (hoy o la seleccionada)
     fecha_str = request.GET.get('fecha')
     today = date.fromisoformat(fecha_str) if fecha_str else date.today()
 
-    # Semana: de lunes a domingo (o según configuración más adelante)
     start_of_week = today - timedelta(days=today.weekday())
 
-    config = ConfiguracionClinica.objects.first()  # usamos la configuración global
+    config = ConfiguracionClinica.objects.first() 
     if not config:
-        # Valores por defecto si no hay configuración
         hora_inicio = time(8, 0)
         hora_fin = time(18, 0)
         intervalo = 30
@@ -302,12 +352,9 @@ def agenda_semanal(request):
         hora_fin = config.hora_cierre
         intervalo = config.intervalo_citas
         dias_laborales = config.get_dias_laborales_lista()
-        print(f"DEBUG (View): Dibujando tabla para días: {dias_laborales}")
 
-    # --- Días según configuración ---
     dias_semana = [start_of_week + timedelta(days=d) for d in dias_laborales]
 
-    # --- Generar intervalos de hora ---
     def generar_horas(hora_inicio, hora_fin, intervalo):
         horas = []
         actual = datetime.combine(date.today(), hora_inicio)
@@ -319,7 +366,6 @@ def agenda_semanal(request):
 
     horas = generar_horas(hora_inicio, hora_fin, intervalo)
 
-    # Obtener id del especialista seleccionado
     especialista_id_str = request.GET.get('especialista_id')
     especialista_seleccionado_id = None
     if especialista_id_str:
@@ -331,15 +377,16 @@ def agenda_semanal(request):
     lista_especialistas = Especialista.objects.all()
 
     context = {
-        'lista_especialistas': lista_especialistas,
-        'today': today,
-        'especialista_seleccionado_id': especialista_seleccionado_id,
-        'view_name': 'agenda_semanal',
-        'dias_semana': dias_semana,
-        'horas_dia': horas,
-        'active_page': 'agenda',
-        
-    }
+            'lista_especialistas': lista_especialistas,
+            'today': today,
+            'especialista_seleccionado_id': especialista_seleccionado_id,
+            'view_name': 'agenda_semanal',
+            'dias_semana': dias_semana,
+            'horas_dia': horas,
+            'active_page': 'agenda',
+            'intervalo': intervalo
+        }
+
 
     return render(request, 'agenda_semanal.html', context)
 
@@ -347,38 +394,23 @@ def agenda_semanal(request):
 
 @login_required
 def api_get_citas_semana(request):
-    """
-    Esta vista devuelve las citas de una SEMANA completa y un especialista
-    específicos en formato JSON.
-    """
-    # 1. Obtener los parámetros
-    #    Cambiamos 'fecha' por 'fecha_inicio' para más claridad
     fecha_inicio_str = request.GET.get('fecha_inicio') 
     especialista_id = request.GET.get('especialista_id')
 
-    # 2. Validar que tenemos los datos necesarios
     if not especialista_id or not fecha_inicio_str:
         return JsonResponse({'error': 'Faltan parámetros'}, status=400)
 
     lista_citas_obj = []
     local_tz = timezone.get_current_timezone()
     try:
-        # 3. Lógica de Rango de Fechas (¡Aquí está el cambio principal!)
-        
-        # Convertimos la fecha de inicio (que debería ser un lunes)
         lunes_local = datetime.fromisoformat(fecha_inicio_str).date()
-        
-        # Calculamos el último día de esa semana (domingo)
         domingo_local = lunes_local + timedelta(days=6)
 
-        # Creamos el rango consciente de la zona horaria, igual que antes
         semana_inicio = timezone.make_aware(datetime.combine(lunes_local, datetime.min.time()), local_tz)
         semana_fin = timezone.make_aware(datetime.combine(domingo_local, datetime.max.time()), local_tz)
         
-        # 4. Consultar la base de datos
         lista_citas_obj = Cita.objects.filter(
             especialista_id=especialista_id, 
-            # Usamos el nuevo rango de 7 días
             fecha_hora__range=(semana_inicio, semana_fin) 
         ).select_related(
             'paciente', 'tratamiento'
@@ -390,9 +422,7 @@ def api_get_citas_semana(request):
         print("Error en api_get_citas_semana:", e)
         return JsonResponse({'citas': []})
 
-
-    # --- ¡ESTE ES EL FILTRO CRÍTICO! ---
-    # Asegúrate de que este bloque exista
+    # Filtro de días laborales
     config = ConfiguracionClinica.objects.first()
     if config:
         dias_laborales_indices = config.get_dias_laborales_lista() # ej: [0, 1, 3, 5]
@@ -405,12 +435,10 @@ def api_get_citas_semana(request):
     for cita in lista_citas_obj:
         hora_local = cita.fecha_hora.astimezone(local_tz)
         
-        # Comprueba si el día de la cita (Lunes=0) está en la lista de permitidos
+        # Comprueba si el día de la cita está en la lista permitida
         if hora_local.weekday() in dias_laborales_indices:
             citas_filtradas.append(cita)
-    # --- FIN DEL FILTRO ---
 
-    # 5. Convertir los objetos de Django en un JSON simple
     citas_json = []
     for cita in citas_filtradas: 
         hora_local = cita.fecha_hora.astimezone(local_tz)
@@ -423,6 +451,8 @@ def api_get_citas_semana(request):
             'id': cita.id,
             'fecha': hora_local.strftime('%Y-%m-%d'),
             'hora': hora_local.strftime('%H:%M'),
+            'paciente_id': cita.paciente.id, 
+            'paciente_telefono': cita.paciente.telefono if cita.paciente else "",
             'paciente_nombre': f"{cita.paciente.nombre} {cita.paciente.apellido}",
             'tratamiento_nombre': cita.tratamiento.nombre if cita.tratamiento else 'N/A',
             'estado': cita.estado or 'Pendiente',
@@ -430,3 +460,170 @@ def api_get_citas_semana(request):
         })
 
     return JsonResponse({'citas': citas_json})
+
+
+    
+
+@login_required
+@require_POST
+def api_cambiar_estado(request):
+    try:
+        data = json.loads(request.body)
+        cita_id = data.get('cita_id')
+        nuevo_estado = data.get('nuevo_estado')
+
+        estados_validos = ['Pendiente', 'Confirmada', 'Cancelada']
+        if nuevo_estado not in estados_validos:
+            return JsonResponse({'error': 'Estado no válido'}, status=400)
+
+        try:
+            cita = Cita.objects.get(id=cita_id)
+            cita.estado = nuevo_estado
+            cita.save(update_fields=['estado']) 
+
+            return JsonResponse({'success': True, 'nuevo_estado': nuevo_estado})
+
+        except Cita.DoesNotExist:
+            return JsonResponse({'error': 'Cita no encontrada'}, status=404)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Datos JSON inválidos'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def editar_cita(request, cita_id):
+    
+    cita = get_object_or_404(Cita, id=cita_id)
+    
+    if request.method == "POST":
+        # Lógica POST
+        try:
+            tratamiento_id = request.POST.get('tratamiento_id')
+            detalles = request.POST.get('detalles', '')
+            fecha_str = request.POST.get('fecha')
+            hora_str = request.POST.get('hora')
+            local_tz = timezone.get_current_timezone()
+
+            if not tratamiento_id:
+                return JsonResponse({'error': 'Debe seleccionar un tratamiento.'}, status=400)
+            
+            tratamiento = Tratamiento.objects.get(id=tratamiento_id)
+            duracion = getattr(tratamiento, 'duracion_minutos', 30)
+            
+            naive_dt = datetime.strptime(f"{fecha_str} {hora_str}", '%Y-%m-%d %H:%M')
+            inicio_nueva = timezone.make_aware(naive_dt, local_tz)
+            fin_nueva = inicio_nueva + timedelta(minutes=duracion)
+
+            citas_existentes = Cita.objects.filter(
+                especialista_id=cita.especialista_id
+            ).exclude(id=cita.id) # Excluye la cita actual
+
+            for c in citas_existentes.select_related('tratamiento'):
+                dur_cita = 30
+                if c.tratamiento and getattr(c.tratamiento, 'duracion_minutos', None):
+                    dur_cita = int(c.tratamiento.duracion_minutos)
+                
+                inicio_cita = c.fecha_hora.astimezone(local_tz) 
+                fin_cita = inicio_cita + timedelta(minutes=dur_cita)
+
+                if inicio_nueva < fin_cita and inicio_cita < fin_nueva:
+                    return JsonResponse({
+                        'error': 'El nuevo horario se superpone con otra cita existente.'
+                    }, status=400)
+            
+            cita.tratamiento_id = tratamiento_id
+            cita.detalles = detalles
+            cita.fecha_hora = inicio_nueva.astimezone(dt_timezone.utc)
+            cita.save()
+            
+            return JsonResponse({'success': True})
+
+        except Tratamiento.DoesNotExist:
+            return JsonResponse({'error': 'Tratamiento inválido.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'Error al guardar: {str(e)}'}, status=400)
+
+    else:
+        # Lógica GET
+        
+        especialistas = Especialista.objects.all()
+        tratamientos = Tratamiento.objects.all()
+        config = ConfiguracionClinica.objects.first() or ConfiguracionClinica.objects.create()
+        
+        local_tz = timezone.get_current_timezone()
+        hora_local = cita.fecha_hora.astimezone(local_tz)
+        
+        fecha_obj = hora_local.date()
+        fecha_str = fecha_obj.strftime('%Y-%m-%d')
+        fecha_legible = formats.date_format(fecha_obj, "l j \d\e F \d\e Y").capitalize()
+
+        slots_disponibles = []
+        if cita.especialista_id and fecha_str:
+            try:
+                intervalo_min = 15 # Forzamos 15 minutos
+                intervalo_td = timedelta(minutes=intervalo_min)
+
+                # 1. Generar todos los slots posibles (cada 15 min)
+                slots_posibles = []
+                hora_actual_dt = datetime.combine(datetime.today(), config.hora_apertura)
+                hora_fin_dt = datetime.combine(datetime.today(), config.hora_cierre)
+                
+                while hora_actual_dt < hora_fin_dt:
+                    slots_posibles.append(hora_actual_dt.time())
+                    hora_actual_dt += intervalo_td
+
+                # 2. Obtener citas existentes (excluyendo la actual)
+                dia_inicio = timezone.make_aware(datetime.combine(fecha_obj, time.min), local_tz)
+                dia_fin = timezone.make_aware(datetime.combine(fecha_obj, time.max), local_tz)
+
+                citas_ese_dia = Cita.objects.filter(
+                    especialista_id=cita.especialista_id, 
+                    fecha_hora__range=(dia_inicio, dia_fin)
+                ).exclude(id=cita_id).select_related('tratamiento')
+
+                # 3. Crear set de slots ocupados
+                citas_ocupadas_set = set()
+                for c in citas_ese_dia:
+                    hora_inicio_cita = c.fecha_hora.astimezone(local_tz).time()
+                    
+                    duracion = 30 
+                    if c.tratamiento and c.tratamiento.duracion_minutos:
+                        duracion = c.tratamiento.duracion_minutos
+                    
+                    num_slots = int(duracion // intervalo_min)
+                    if duracion % intervalo_min > 0:
+                        num_slots += 1
+                    
+                    temp_dt = datetime.combine(date.today(), hora_inicio_cita)
+                    for i in range(num_slots):
+                        citas_ocupadas_set.add(temp_dt.time())
+                        temp_dt += intervalo_td
+
+                # 4. Filtrar la lista
+                for slot in slots_posibles:
+                    if slot not in citas_ocupadas_set: 
+                        slots_disponibles.append(slot)
+                
+            except (ValueError, TypeError) as e:
+                print(f"Error generando slots para editar: {e}")
+                slots_disponibles = []
+
+        initial_data = {
+            'especialista_id': str(cita.especialista.id),
+            'fecha': fecha_str,
+            'hora': hora_local.strftime('%H:%M'), # Hora pre-seleccionada
+            'fecha_legible': fecha_legible
+        }
+        
+        context = {
+            'especialistas': especialistas,
+            'tratamientos': tratamientos,
+            'initial_data': initial_data,
+            'slots_disponibles': slots_disponibles,
+            'cita_instancia': cita,
+            'view_mode': 'daily' # Para que el HTML muestre el <select>
+        }
+        
+        return render(request, 'form_cita.html', context)

@@ -8,7 +8,7 @@
 
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">Gestión de Pacientes</h1>
+          <h1 class="h4 mb-0 fw-semibold" id="titulo-agenda">Gestión de Pacientes</h1>
         <div class="d-flex align-items-center">
             <a href="{% url 'crearpacientes' %}" class="btn btn-primario">Registrar Paciente</a>
         </div>
@@ -37,15 +37,33 @@
                     <td>{{ paciente.correo|default:"" }}</td>
                     <td>{{ paciente.telefono|default:"" }}</td>
 
-                    <td class="text-center">
-                        
-                        <a href="{% url 'edicionpaciente' paciente.id %}" class="btn btn-sm btn-modificar">Modificar</a>
-                        
-                        <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-borrar" onclick="return confirm('¿Estás seguro de que deseas eliminar a este paciente?');">Borrar</button>
-                        </form>
-                    </td>
+<td class="text-center">
+    <div class="d-flex justify-content-center align-items-center gap-2">
+        
+        <a href="{% url 'edicionpaciente' paciente.id %}" 
+           class="btn btn-accion-ico btn-accion-modificar" 
+           title="Modificar Paciente">
+            <i class="bi bi-pencil-fill"></i>
+        </a>
+
+        <a href="{% url 'expediente_paciente' paciente.id %}" 
+           class="btn btn-sm btn-accion-expediente-txt d-flex align-items-center" 
+           title="Ver Expediente">
+            <i class="bi bi-file-earmark-text-fill me-1"></i> Exp.
+        </a>
+
+        <form method="post" action="{% url 'eliminarpaciente' paciente.id %}" class="d-inline mb-0">
+            {% csrf_token %}
+            <button type="submit" 
+                    class="btn btn-accion-ico btn-accion-borrar" 
+                    title="Eliminar Paciente" 
+                    onclick="return confirm('¿Estás seguro de que desea eliminar al paciente {{paciente.nombre}} {{paciente.apellido}}?');">
+                <i class="bi bi-trash-fill"></i>
+            </button>
+        </form>
+        
+    </div>
+</td>
                 </tr>
                 {% endfor %}
             </tbody>

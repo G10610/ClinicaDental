@@ -1,85 +1,314 @@
-document.addEventListener('DOMContentLoaded', function () {
+function horaAMinutos(horaStr) {
+    if (!horaStr || !horaStr.includes(':')) {
+        console.error("Formato de hora inválido:", horaStr);
+        return 0;
+    }
+    const [h, m] = horaStr.split(":").map(Number);
+    return (h * 60) + m;
+}
 
-    // --- NUEVO ---
-    // Construye la cuadrícula con las fechas de la semana actual
-    function reconstruirTablaSemana(lunes) {
+function minutosAHora(totalMinutos) {
+    const minNormalizados = Math.min(totalMinutos, 1439);
+    const h = Math.floor(minNormalizados / 60).toString().padStart(2, "0");
+    const m = Math.round(minNormalizados % 60).toString().padStart(2, "0");
+    return `${h}:${m}`;
+}
 
-        // 1) Calcular las fechas 
-        const fechasSemana = [];
-        for (let i = 0; i < totalDias; i++) {
-            const f = new Date(lunes);
-            f.setDate(lunes.getDate() + i);
-            fechasSemana.push(f);
+function pintarCita(cita, intervalo) {
+    console.log("CITA RECIBIDA EN SEMANAL:", cita);
+
+    const fecha = cita.fecha;
+    const duracion = cita.duracion;
+
+    const minutosCita = horaAMinutos(cita.hora);
+    const minutosEnSlot = minutosCita % intervalo;
+    const minutosSlotInicio = minutosCita - minutosEnSlot;
+
+    const h = Math.floor(minutosSlotInicio / 60).toString().padStart(2, "0");
+    const m = (minutosSlotInicio % 60).toString().padStart(2, "0");
+    const horaSlot = `${h}:${m}`;
+
+    const celdaContenedora = document.querySelector(
+        `.celda-agenda-semanal[data-date="${fecha}"][data-time="${horaSlot}"]`
+    );
+
+    if (!celdaContenedora) {
+        console.warn("Celda contenedora no encontrada:", { cita, horaSlot });
+        return;
+    }
+
+    const cssTop = (minutosEnSlot / intervalo) * 100;
+    const cssHeight = (duracion / intervalo) * 100;
+
+    const bloque = document.createElement("div");
+    bloque.classList.add("cita-block");
+
+    let color = "var(--color-secondary)";
+    if (cita.estado === "Confirmada") color = "#1ABC9C";
+    if (cita.estado === "Pendiente") color = "#E67E22";
+    if (cita.estado === "Cancelada") color = "#E74C3C";
+    bloque.style.backgroundColor = color;
+
+    bloque.style.top = `${cssTop}%`;
+    bloque.style.height = `calc(${cssHeight}% - 2px)`;
+
+    bloque.innerHTML = `
+        <span class="cita-paciente">${cita.paciente_nombre}</span>
+        <span class="cita-tratamiento">${cita.tratamiento_nombre}</span>
+    `;
+
+    // Menú contextual
+    bloque.addEventListener("click", (e) => {
+        e.stopPropagation(); 
+        console.log("CLICK EN CITA", cita);
+        mostrarMenuCita(e, cita);
+    });
+    celdaContenedora.appendChild(bloque);
+}
+
+let menuActual = null;
+
+function mostrarMenuCita(ev, cita) {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    const menu = document.getElementById("menu-cita");
+    if (!menu) {
+        console.error("No existe #menu-cita en el DOM.");
+        return;
+    }
+
+    menu.innerHTML = `
+        <div class="item opcion-menu" data-action="whatsapp"><i class="bi bi-whatsapp me-2" style="color:#25D366"></i>WhatsApp</div>
+        <div class="item opcion-menu" data-action="ver"><i class="bi bi-pencil-square me-2"></i>Ver / Editar cita</div>
+        <div class="item opcion-menu" data-action="expediente"><i class="bi bi-folder2-open me-2"></i>Ver expediente</div>
+        <hr>
+        <div class="item opcion-menu" data-action="pendiente">🟧 Marcar Pendiente</div>
+        <div class="item opcion-menu" data-action="confirmada">🟩 Marcar Confirmada</div>
+        <div class="item opcion-menu" data-action="cancelada">🟥 Marcar Cancelada</div>
+    `;
+
+    const pad = 8;
+    const menuWidth = 200; 
+    const menuHeightEstimate = 220;
+    let left = ev.clientX;
+    let top = ev.clientY;
+
+    if (left + menuWidth + pad > window.innerWidth) {
+        left = window.innerWidth - menuWidth - pad;
+    }
+    if (top + menuHeightEstimate + pad > window.innerHeight) {
+        top = window.innerHeight - menuHeightEstimate - pad;
+    }
+
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    menu.classList.add('show');
+
+    conectarEventosMenuCita(menu, cita);
+    
+    setTimeout(() => {
+        document.addEventListener('click', cerrarMenuClickFuera);
+    }, 0);
+}
+window.mostrarMenuCita = mostrarMenuCita;
+
+
+function cerrarMenuClickFuera(e) {
+    const menu = document.getElementById("menu-cita");
+    if (!menu) return;
+    if (!menu.contains(e.target)) {
+        menu.classList.remove('show');
+        document.removeEventListener('click', cerrarMenuClickFuera);
+    }
+}
+
+function contactarWhatsapp(telefono) {
+    if (!telefono) return alert("El paciente no tiene número registrado.");
+    window.open(`https://wa.me/${telefono}`, "_blank");
+}
+
+function abrirModalEditar(citaId) {
+    if (!urlEditarCitaTemplate) {
+        console.error("urlEditarCitaTemplate no definida en el template.");
+        alert("No hay URL de edición configurada.");
+        return;
+    }
+    const url = urlEditarCitaTemplate.replace('/0/', `/${citaId}/`);
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarCita'));
+    const modalBody = document.getElementById('modal-body-form-editar-cita');
+    modalBody.innerHTML = `<div class="d-flex justify-content-center align-items-center" style="min-height:200px;"><div class="spinner-border text-primary" role="status"></div></div>`;
+    fetch(url)
+        .then(r => {
+            if (!r.ok) throw new Error('Error cargando datos de la cita');
+            return r.text();
+        })
+        .then(html => {
+            modalBody.innerHTML = html;
+            const modalFooter = document.querySelector('#modalEditarCita .modal-footer');
+            const formButtons = modalBody.querySelector('.modal-footer-contenido');
+            if (modalFooter && formButtons) {
+                modalFooter.innerHTML = formButtons.innerHTML;
+                formButtons.remove();
+            }
+            if (typeof configurarFormularioCita === 'function') configurarFormularioCita();
+            modal.show();
+        })
+        .catch(err => {
+            console.error(err);
+            modalBody.innerHTML = `<div class="alert alert-danger">Error al cargar datos.</div>`;
+            modal.show();
+        });
+}
+
+function verExpediente(idPaciente) {
+    window.location.href = `/expediente/${idPaciente}`;
+}
+
+function cambiarEstado(idCita, nuevoEstado) {
+    actualizarEstadoCita(idCita, nuevoEstado);
+}
+
+
+function conectarEventosMenuCita(menu, cita) {
+    menu.replaceWith(menu.cloneNode(true));
+    const nuevoMenu = document.getElementById("menu-cita");
+
+    nuevoMenu.addEventListener("click", function(ev) {
+        ev.stopPropagation();
+        const item = ev.target.closest('.opcion-menu');
+        if (!item) return;
+        const accion = item.dataset.action;
+        if (!accion) return;
+
+        if (accion === 'whatsapp') {
+            let tel = (cita.paciente_telefono ? String(cita.paciente_telefono) : '').replace(/[^0-9+]/g, '');
+            if (tel.startsWith('+')) tel = tel.substring(1);
+            if (tel && !tel.startsWith('503')) tel = '503' + tel;
+            if (!tel) { alert('Paciente sin teléfono'); nuevoMenu.classList.remove('show'); return; }
+            window.open(`https://wa.me/${tel}`, '_blank');
         }
 
-        // 2) Actualizar ENCABEZADOS (th)
-        const ths = document.querySelectorAll('.th-dia-semana');
-        fechasSemana.forEach((f, index) => {
-            const fechaStr = f.toISOString().split('T')[0];
-            const legible = f.toLocaleDateString('es-ES', { weekday:'short', day:'numeric' });
-            ths[index].textContent = legible;
-            ths[index].setAttribute('data-date', fechaStr);
-        });
+        if (accion === 'ver') {
+            abrirModalEditar(cita.id);
+        }
 
-        // 3) Actualizar cada FILA de horas
-        const filas = gridBody.querySelectorAll('tr');
-        filas.forEach(fila => {
-            const hora = fila.getAttribute('data-time'); // "08:00", "09:00", etc.
+        if (accion === 'expediente') {
+            const url = urlExpedienteTemplate.replace("0", cita.paciente_id);
+            window.open(url, '_blank');
+        }
 
-            const celdas = fila.querySelectorAll('.celda-agenda-semanal');
+        if (accion === 'pendiente' || accion === 'confirmada' || accion === 'cancelada') {
+            const estado = accion === 'pendiente' ? 'Pendiente' : accion === 'confirmada' ? 'Confirmada' : 'Cancelada';
+            cambiarEstadoDesdeMenu(cita.id, estado);
+        }
 
-            celdas.forEach((celda, idx) => {
-                const fechaStr = fechasSemana[idx].toISOString().split('T')[0];
+        nuevoMenu.classList.remove('show');
+    });
+}
 
-                // Reasignar la fecha correcta
-                celda.setAttribute('data-date', fechaStr);
-
-                // LIMPIAR citas antiguas
-                const eventos = celda.querySelectorAll('.cita-evento');
-                eventos.forEach(ev => ev.remove());
-            });
-        });
+function getCSRFToken() {
+    let csrfToken = null;
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const c = cookie.trim();
+        if (c.startsWith('csrftoken=')) {
+            csrfToken = c.substring('csrftoken='.length);
+            break;
+        }
     }
-    
-    // --- 1. ELEMENTOS DEL DOM ---
-    // (Casi todos son iguales a agenda.js)
+    return csrfToken;
+}
+
+
+function cambiarEstadoDesdeMenu(citaId, nuevoEstado) {
+
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        alert("Error de seguridad. No se puede cambiar el estado.");
+        return;
+    }
+
+    fetch(apiCambiarEstadoURL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            cita_id: citaId,
+            nuevo_estado: nuevoEstado
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if (!data.success) {
+            alert("Error: " + (data.error || 'No se pudo cambiar el estado'));
+            return;
+        }
+
+        const bloque = document.querySelector(`.cita[data-id="${citaId}"]`);
+        if (bloque) {
+            bloque.classList.remove(
+                'cita-pendiente',
+                'cita-confirmada',
+                'cita-cancelada'
+            );
+
+            if (data.nuevo_estado === 'Confirmada') {
+                bloque.classList.add('cita-confirmada');
+            } else if (data.nuevo_estado === 'Cancelada') {
+                bloque.classList.add('cita-cancelada');
+            } else {
+                bloque.classList.add('cita-pendiente');
+            }
+
+            const estadoSpan = bloque.querySelector('.estado-cita');
+            if (estadoSpan) estadoSpan.textContent = data.nuevo_estado;
+        }
+
+        location.reload();
+
+    })
+    .catch(err => {
+        console.error("Error en cambiarEstadoDesdeMenu:", err);
+        alert("Error de conexión.");
+    });
+}
+
+// Funciones de fecha
+function normalizarHora(hora) {
+    if (/^\d{2}:\d{2}$/.test(hora)) {
+        return hora;
+    }
+    const fecha = new Date(`2000-01-01 ${hora}`);
+    let h = fecha.getHours().toString().padStart(2, "0");
+    let m = fecha.getMinutes().toString().padStart(2, "0");
+    return `${h}:${m}`;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Elementos DOM
     const fechaInput = document.getElementById('filtro-fecha');
     const fechaLegible = document.getElementById('fecha-legible');
     const prevBtn = document.getElementById('prev-semana');
     const nextBtn = document.getElementById('next-semana');
     const especialistaSelect = document.getElementById('filtro-especialista');
-
-    // Detectar cuántos días hay en la tabla horizontal
-    const totalDias = document.querySelectorAll('.th-dia-semana').length;
     
-    // ¡IMPORTANTE! Elemento de la cuadrícula
+    const gridHead = document.querySelector('#agenda-semanal-grid thead');
     const gridBody = document.querySelector('#agenda-semanal-grid tbody');
     
     const modalCrearCita = document.getElementById('modalCrearCita');
     const modalBody = document.getElementById('modal-body-form-cita');
 
-    // Seguridad: si falta algo, salimos
-    if (!fechaInput || !fechaLegible || !prevBtn || !nextBtn || !especialistaSelect || !gridBody || !modalCrearCita) {
+    if (!fechaInput || !fechaLegible || !prevBtn || !nextBtn || !especialistaSelect || !gridBody || !gridHead || !modalCrearCita) {
         console.error('Faltan elementos del DOM en agenda_semanal.js');
         return;
     }
 
-    function normalizarHora(hora) {
-        // Si ya viene en formato "HH:MM", lo dejamos igual
-        if (/^\d{2}:\d{2}$/.test(hora)) {
-            return hora;
-        }
-
-        // Si viene en formato "HH:MM AM/PM"
-        const fecha = new Date(`2000-01-01 ${hora}`);
-        let h = fecha.getHours().toString().padStart(2, "0");
-        let m = fecha.getMinutes().toString().padStart(2, "0");
-        return `${h}:${m}`;
-    }
-
-
-    // --- 2. FUNCIONES DE FECHA ---
-    // (parseFechaLocal y formatearFecha son copiadas de agenda.js)
+    
     function parseFechaLocal(yyyyMmDd) {
         if (!yyyyMmDd) return new Date();
         const [y, m, d] = yyyyMmDd.split('-').map(Number);
@@ -91,20 +320,16 @@ document.addEventListener('DOMContentLoaded', function () {
         return fecha.toLocaleDateString('es-ES', opciones);
     }
 
-    // --- NUEVA FUNCIÓN ---
-    // Obtiene el lunes de la semana de una fecha dada
     function getLunes(fecha) {
         const fechaCopia = new Date(fecha.valueOf());
-        const diaSemana = fechaCopia.getDay(); // Domingo = 0, Lunes = 1, ...
-        const diff = fechaCopia.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1); // Ajuste para que Lunes sea el primero
+        const diaSemana = fechaCopia.getDay();
+        const diff = fechaCopia.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
         return new Date(fechaCopia.setDate(diff));
     }
 
-    // --- NUEVA FUNCIÓN ---
-    // Formatea el rango de la etiqueta (ej: "10 nov - 16 nov, 2025")
     function formatearRangoFechas(lunes) {
-        // Número real de columnas de la tabla
-        const dias = document.querySelectorAll('.th-dia-semana').length;
+        const dias = gridHead.querySelectorAll('.th-dia-semana').length;
+        if (dias === 0) return "Error";
 
         const fechaFin = new Date(lunes.valueOf());
         fechaFin.setDate(lunes.getDate() + (dias - 1));
@@ -118,207 +343,217 @@ document.addEventListener('DOMContentLoaded', function () {
         return `${inicioStr} - ${finStr}`;
     }
 
-
-
-    // --- 3. ESTADO Y NAVEGACIÓN ---
-    
-    // 'fechaActual' es la fecha del input, la usamos como referencia
-    let fechaActual = parseFechaLocal(fechaInput.value);
-    
-    // La etiqueta legible muestra el rango semanal
-    fechaLegible.textContent = formatearRangoFechas(getLunes(fechaActual));
-
-    function actualizarFechaYRecargar() {
-        // 1) deja que el input sea la verdad absoluta
-        const fechaSeleccionada = parseFechaLocal(fechaInput.value);
-
-        // 2) calcula lunes basándote en ESA fecha (no en fechaActual)
-        const lunes = getLunes(fechaSeleccionada);
-
-        // 3) reconstruir tabla
-        reconstruirTablaSemana(lunes);
-
-        // 4) actualizar etiqueta
-        fechaLegible.textContent = formatearRangoFechas(lunes);
-
-        // 5) cargar citas
-        cargarCitas();
+    // Lógica de agenda
+    function limpiarAgenda() {
+        const citasViejas = gridBody.querySelectorAll('.cita-block'); 
+        citasViejas.forEach(cita => {
+            cita.remove();
+        });
     }
 
-
-    prevBtn.addEventListener('click', () => {
-        const fechaBase = parseFechaLocal(fechaInput.value);
-        fechaBase.setDate(fechaBase.getDate() - 7);
-        fechaInput.value = fechaBase.toISOString().split('T')[0];
-        actualizarFechaYRecargar();
-
-    });
-
-
-    nextBtn.addEventListener('click', () => {
-        const fechaBase = parseFechaLocal(fechaInput.value);
-        fechaBase.setDate(fechaBase.getDate() + 7);
-        fechaInput.value = fechaBase.toISOString().split('T')[0];
-        actualizarFechaYRecargar();
-
-    });
-
-    fechaInput.addEventListener('change', () => {
-        const nuevaFecha = fechaInput.value;
-        if (nuevaFecha) {
-            fechaActual = parseFechaLocal(nuevaFecha);
-            actualizarFechaYRecargar(); // ← FIX REAL
-        }
-    });
-
-    
-
-// En agenda_semanal.js, REEMPLAZA tu listener de especialistaSelect
-
-    especialistaSelect.addEventListener('change', () => {
-        // (Este ya estaba bien)
-        const especialistaId = especialistaSelect.value;
+    function actualizarInterfazFechas(fechaReferencia) {
+        const lunes = getLunes(fechaReferencia);
         
-        if (especialistaId) {
-            localStorage.setItem("especialista_id", especialistaId);
-        } else {
-            localStorage.removeItem("especialista_id");
-        }
-        
-        recargarSemanaConFecha(fechaInput.value, especialistaId);
-    });
+        fechaLegible.textContent = formatearRangoFechas(lunes);
 
-    // --- 4. FUNCIÓN PRINCIPAL PARA CARGAR CITAS ---
-    // (Esta es tu función esqueleto, pero adaptada para llamar a la API correcta)
+        const ths = gridHead.querySelectorAll('.th-dia-semana');
+        const totalDias = ths.length;
+        
+        for (let i = 0; i < totalDias; i++) {
+            const f = new Date(lunes);
+            f.setDate(lunes.getDate() + i);
+            
+            const fechaStr = f.toISOString().split('T')[0];
+            const dia = f.toLocaleDateString('es-ES', { weekday:'short' }).replace('.', '');
+            const num = f.toLocaleDateString('es-ES', { day:'numeric' });
+            
+            ths[i].innerHTML = `${dia}<br><span class="fw-normal fs-6">${num}</span>`;
+            ths[i].setAttribute('data-date', fechaStr);
+        }
+
+        const filas = gridBody.querySelectorAll('tr');
+        filas.forEach(fila => {
+            const celdas = fila.querySelectorAll('.celda-agenda-semanal');
+            for (let i = 0; i < celdas.length; i++) {
+                const f = new Date(lunes);
+                f.setDate(lunes.getDate() + i);
+                celdas[i].setAttribute('data-date', f.toISOString().split('T')[0]);
+            }
+        });
+    }
+
     function cargarCitas() {
         const especialista_id = especialistaSelect.value;
-
-        // Limpiar todas las citas anteriores de la cuadrícula
-        gridBody.querySelectorAll('.cita-evento').forEach(citaEl => citaEl.remove());
+        const fechaBase = parseFechaLocal(fechaInput.value);
+        const lunes = getLunes(fechaBase);
+        const fechaInicioSemana = lunes.toISOString().split('T')[0];
+        
+        limpiarAgenda();
 
         if (!especialista_id) {
             console.warn("No hay especialista seleccionado.");
-            // (Opcional: mostrar un mensaje en la UI)
             return;
         }
 
-        // --- ADAPTADO ---
-        // 1. Calcular el lunes de la semana actual
-        const lunes = getLunes(parseFechaLocal(fechaInput.value));
-        const fechaInicioSemana = lunes.toISOString().split('T')[0];
-
-        // 2. Construir la URL para la NUEVA API SEMANAL
-        // Asumimos que la URL en el HTML se llama 'apiGetCitasURL'
-        // y que tu nueva API acepta `fecha_inicio`
-        const url = `${apiGetCitasURL}?fecha_inicio=${fechaInicioSemana}&especialista_id=${especialista_id}`;
+        const url = new URL(apiGetCitasURL, window.location.origin);
+        url.searchParams.append('fecha_inicio', fechaInicioSemana);
+        url.searchParams.append('especialista_id', especialista_id);
         
-        console.log("Cargando citas semanales desde:", url);
-
-        fetch(url)
+        console.log("Cargando citas semanales desde:", url.href);
+        
+        fetch(url.href)
             .then(r => {
                 if (!r.ok) throw new Error('Error en la API semanal');
                 return r.json();
             })
             .then(data => {
                 const citas = data.citas || [];
-
                 if (citas.length === 0) {
                     console.log("No hay citas para esta semana.");
                     return;
                 }
-
+                
+                const intervalo = parseInt(gridBody.dataset.intervalo) || 30;
+                
                 citas.forEach(cita => {
-
-                    // 1. VARIABLES REALES QUE SÍ EXISTEN
-                    const fecha = cita.fecha;         // YYYY-MM-DD
-                    const hora = cita.hora;           // "08:00" o "08:00 AM"
-                    
-                    const horaNormalizada = normalizarHora(hora);
-
-                    // 2. BUSCAR LA CELDA CORRECTA EN LA TABLA
-                    const celda = document.querySelector(
-                        `.celda-agenda-semanal[data-date="${fecha}"][data-time="${horaNormalizada}"]`
-                    );
-
-                    if (!celda) {
-                        console.warn("No se encontró celda para:", fecha, horaNormalizada);
-                        return;
-                    }
-
-                    // 3. RENDERIZAR EVENTO
-                    const citaDiv = document.createElement('div');
-                    citaDiv.className = 'cita-evento';
-
-                    // Colores por estado
-                    let estadoClass = 'bg-secondary';
-                    if (cita.estado === 'Confirmada') estadoClass = 'bg-success';
-                    if (cita.estado === 'Cancelada') estadoClass = 'bg-danger';
-                    citaDiv.classList.add(estadoClass);
-
-                    citaDiv.innerHTML = `
-                        <strong class="cita-paciente">${cita.paciente_nombre}</strong>
-                        <span class="cita-tratamiento">${cita.tratamiento_nombre}</span>
-                    `;
-
-                    celda.appendChild(citaDiv);
+                    pintarCita(cita, intervalo);
                 });
-
             })
             .catch(err => {
                 console.error("Error al cargar citas semanales:", err);
             });
     }
-    
     window.cargarCitas = cargarCitas;
-
-    // --- 5. MANEJO DEL MODAL ---
     
-    // --- NUEVO ---
-    // Esta es tu lógica del esqueleto para abrir el modal AL HACER CLIC EN UNA CELDA
-    // (Está perfecta como la tenías)
+    function recargarAgendaCompleta() {
+        const fechaSeleccionada = parseFechaLocal(fechaInput.value);
+        
+        actualizarInterfazFechas(fechaSeleccionada);
+        
+        cargarCitas();
+    }
+
+
+    // Event Listeners
+    prevBtn.addEventListener('click', () => {
+        const fechaBase = parseFechaLocal(fechaInput.value);
+        fechaBase.setDate(fechaBase.getDate() - 7);
+        fechaInput.value = fechaBase.toISOString().split('T')[0];
+        recargarAgendaCompleta(); 
+    });
+
+    nextBtn.addEventListener('click', () => {
+        const fechaBase = parseFechaLocal(fechaInput.value);
+        fechaBase.setDate(fechaBase.getDate() + 7);
+        fechaInput.value = fechaBase.toISOString().split('T')[0];
+        recargarAgendaCompleta(); 
+    });
+
+    fechaInput.addEventListener('change', () => {
+        recargarAgendaCompleta(); 
+    });
+
+    especialistaSelect.addEventListener('change', () => {
+        const especialistaId = especialistaSelect.value;
+        if (especialistaId) {
+            localStorage.setItem("especialista_id", especialistaId);
+        } else {
+            localStorage.removeItem("especialista_id");
+        }
+        recargarAgendaCompleta(); 
+    });
+
+    gridBody.addEventListener('click', function(event) {
+        
+        const botonEstado = event.target.closest('.btn-cambiar-estado');
+        if (botonEstado) {
+            event.preventDefault();
+            const citaId = botonEstado.dataset.idCita;
+            const nuevoEstado = botonEstado.dataset.estado;
+            const csrfToken = getCSRFToken();
+            if (!csrfToken) return alert("Error de seguridad.");
+
+            fetch(apiCambiarEstadoURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ 'cita_id': citaId, 'nuevo_estado': nuevoEstado })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cargarCitas();
+                    const popover = bootstrap.Popover.getInstance(document.querySelector('.popover.show'));
+                    if (popover) popover.hide();
+                } else {
+                    alert('Error al actualizar la cita: ' + (data.error || 'Desconocido'));
+                }
+            })
+            .catch(error => console.error('Error en fetch (cambiar estado):', error));
+            return;
+        }
+
+        const botonWhatsapp = event.target.closest('.cita-whatsapp-btn.disabled');
+        if (botonWhatsapp) {
+            event.preventDefault();
+            console.log("Clic detenido: Teléfono no registrado.");
+            return;
+        }
+    });
+    
     gridBody.querySelectorAll('.celda-agenda-semanal').forEach(celda => {
         celda.addEventListener('click', function(e) {
             
-            if (e.target.closest('.cita-evento')) {
-                // (Futuro) Aquí abrirías el modal de "Ver/Editar"
-                console.log("Clic en una cita existente");
+            if (e.target.closest('.cita-block')) {
                 return;
             }
 
-            // Es una celda vacía, abrir modal de CREAR
+            const rect = celda.getBoundingClientRect();
+            const clickY_relative = e.clientY - rect.top;
+            const click_percentage = Math.max(0, clickY_relative / celda.offsetHeight);
+
+            const intervalo = parseInt(gridBody.dataset.intervalo) || 30; 
+            const minutosBaseCelda = horaAMinutos(celda.dataset.time); 
+            
+            let minutosAgregados = 0;
+
+            if (click_percentage >= 0.5) {
+                let mitadIntervalo = intervalo / 2; 
+                
+                const snapping = 5; 
+                minutosAgregados = Math.round(mitadIntervalo / snapping) * snapping;
+            }
+
+            const minutosTotales = minutosBaseCelda + minutosAgregados;
+            
+            const horaClicPrecisa = minutosAHora(minutosTotales);
             const fechaClic = celda.dataset.date;
-            const horaClic = celda.dataset.time;
             
             const modal = new bootstrap.Modal(document.getElementById('modalCrearCita'));
             const modalBody = document.getElementById('modal-body-form-cita');
             
             modalBody.innerHTML = `<div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
                 <div class="spinner-border text-primary" role="status"></div>
-            </div>`; // Spinner
+            </div>`; 
 
             const especialista_id = especialistaSelect.value;
-            // IMPORTANTE: Esta URL debe apuntar a la vista que renderiza el *formulario*
-            const urlFormulario = `/citas/crear/?especialista_id=${especialista_id}&fecha=${fechaClic}&hora=${horaClic}`;
+            
+            const urlFormulario = `/citas/crear/?especialista_id=${especialista_id}&fecha=${fechaClic}&hora=${horaClicPrecisa}`;
             
             fetch(urlFormulario)
                 .then(response => response.text())
                 .then(html => {
                     modalBody.innerHTML = html;
                     
-                    // Mover botones del footer (lógica copiada de agenda.js)
                     const modalFooter = modalCrearCita.querySelector('.modal-footer');
                     const formButtons = modalBody.querySelector('.modal-footer-contenido');
-                    const selectHora = modalBody.querySelector('#hora');
+
                     
-                    if (selectHora) {
-                        selectHora.value = horaClic; 
-                    }
                     if (modalFooter && formButtons) {
                         modalFooter.innerHTML = formButtons.innerHTML;
                         formButtons.remove();
                     }
                     
-                    configurarFormularioCita(); // ¡Configurar el form recién cargado!
+                    configurarFormularioCita(); 
                 })
                 .catch(err => {
                     console.error("Error al cargar form modal:", err);
@@ -329,100 +564,70 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // --- COPIADO DE agenda.js ---
-    // Esta lógica es para abrir el modal con el BOTÓN "NUEVA CITA"
-    // (Usa la fecha del input, sin hora específica)
-    if (modalCrearCita) {
-        modalCrearCita.addEventListener('show.bs.modal', function (event) {
-            
-            // IMPORTANTE: Solo ejecutar si se abrió con el botón (relatedTarget)
-            // Si no, la lógica de 'clic en celda' ya se encargó.
-            if (!event.relatedTarget) {
-                return; 
+    function getCSRFToken() {
+        let csrfToken = null;
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const cookieLimpia = cookie.trim();
+            if (cookieLimpia.startsWith('csrftoken=')) {
+                csrfToken = cookieLimpia.substring('csrftoken='.length);
+                break;
             }
+        }
+        if (!csrfToken) console.error("¡Error fatal! No se pudo encontrar el CSRF token.");
+        return csrfToken;
+    }
 
-            const filtroEspecialista = especialistaSelect.value;
-            const filtroFecha = fechaInput.value; // Usa la fecha del input
-
-            modalBody.innerHTML = `<div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
-                <div class="spinner-border text-primary" role="status"></div>
-            </div>`; // Spinner
-
-            // Esta URL no pasa la hora, el form usará la primera disponible
-            const url = `/citas/crear/?especialista_id=${filtroEspecialista}&fecha=${filtroFecha}`;
+    const modalEditarCita = document.getElementById('modalEditarCita');
+    if (modalEditarCita) {
+        modalEditarCita.addEventListener('show.bs.modal', function (event) {
+            const boton = event.relatedTarget;
+            const citaId = boton.dataset.idCita;
+            const url = urlEditarCitaTemplate.replace('/0/', `/${citaId}/`);
+            const modalBody = document.getElementById('modal-body-form-editar-cita');
+            
+            modalBody.innerHTML = `<div class="d-flex justify-content-center align-items-center" style="min-height: 200px;"><div class="spinner-border text-primary" role="status"></div></div>`;
             
             fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error('Error al cargar el formulario.');
-                    return response.text();
-                })
+                .then(response => response.text())
                 .then(html => {
                     modalBody.innerHTML = html;
-                    const modalFooter = modalCrearCita.querySelector('.modal-footer');
+                    const modalFooter = modalEditarCita.querySelector('.modal-footer');
                     const formButtons = modalBody.querySelector('.modal-footer-contenido');
                     if (modalFooter && formButtons) {
                         modalFooter.innerHTML = formButtons.innerHTML;
                         formButtons.remove();
                     }
-                    if (typeof configurarFormularioCita === 'function') configurarFormularioCita();
+                    configurarFormularioCita(); 
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                    modalBody.innerHTML = `<div class="alert alert-danger">Error al cargar. Por favor, intenta de nuevo.</div>`;
+                .catch(err => {
+                    console.error("Error al cargar form de edición:", err);
+                    modalBody.innerHTML = "<div class='alert alert-danger'>Error al cargar los datos.</div>";
                 });
         });
     }
 
-    // --- 6. CARGA INICIAL ---
-    // (Copiado de agenda.js)
+    // Carga inicial
     const espGuardado = localStorage.getItem('especialista_id');
-    if (espGuardado && espGuardado !== especialistaSelect.value) {
-         // Si localStorage tiene un ID pero la URL no (ej. al cargar por primera vez)
-         // O si el ID de la URL es diferente, forzamos la recarga para sincronizar.
-         console.log("Sincronizando especialista de localStorage...");
-         recargarSemanaConFecha(fechaInput.value, espGuardado);
-    } else {
-        // Si todo está sincronizado, simplemente cargamos las citas
-        cargarCitas();
+    if (espGuardado) {
+        especialistaSelect.value = espGuardado;
     }
 
-    function recargarSemanaConFecha(yyyyMmDd, especialistaId) {
-        // 1. Actualizar estado interno
-        fechaActual = parseFechaLocal(yyyyMmDd);
-
-        // 2. Actualizar input
-        fechaInput.value = yyyyMmDd;
-
-        // 3. Actualizar el rango legible
-        fechaLegible.textContent = formatearRangoFechas(getLunes(fechaActual));
-
-        // 4. Actualizar especialista si viene
-        if (especialistaId) {
-            especialistaSelect.value = especialistaId;
-        }
-
-        // 5. Cargar citas correctamente
-        cargarCitas();
-    }
+    recargarAgendaCompleta();
 
 });
 
 
-// === 7. FUNCIÓN DE CONFIGURACIÓN DEL FORMULARIO ===
-// (Esta función es COPIADA ÍNTEGRAMENTE de agenda.js)
-// (Asegúrate de que 'buscarPacientesURL' esté definida en tu HTML)
-
+// Configuración formulario de cita
 function configurarFormularioCita() {
-    // --- 1. Definir todos los elementos ---
     const input = document.getElementById('buscarPaciente');
     if (!input) {
         console.log("configurarFormularioCita: Saliendo, form no cargado.");
-        return; // Seguridad
+        return; 
     }
     const resultados = document.getElementById('resultadosPacientes');
     const hiddenInput = document.getElementById('paciente_id');
     
-    // ... (resto de 'const' de agenda.js) ...
     const checkNuevo = document.getElementById('check-nuevo-paciente');
     const contNuevo = document.getElementById('campos-nuevo-paciente');
     const inputNombre = document.getElementById('nuevo_paciente_nombre');
@@ -433,7 +638,6 @@ function configurarFormularioCita() {
         return; 
     }
 
-    // --- 2. Lógica de Búsqueda (KEYUP) ---
     input.addEventListener('keyup', function() {
         if (input.disabled) { 
             resultados.innerHTML = '';
@@ -480,10 +684,8 @@ function configurarFormularioCita() {
             });
     });
 
-    // --- 3. Lógica del Checkbox (CHANGE) ---
     checkNuevo.addEventListener('change', function() {
         if (this.checked) {
-            // Modo "NUEVO PACIENTE"
             input.disabled = true;
             input.classList.add('bg-light');
             input.value = '';
@@ -494,7 +696,6 @@ function configurarFormularioCita() {
             inputNombre.required = true;
             inputApellido.required = true;
         } else {
-            // Modo "BUSCAR PACIENTE"
             input.disabled = false;
             input.classList.remove('bg-light');
             contNuevo.style.display = 'none';   
@@ -505,10 +706,8 @@ function configurarFormularioCita() {
             inputApellido.value = '';
         }
     });
-    // Trigger 'change' en caso de que el form venga pre-marcado
     if(checkNuevo.checked) checkNuevo.dispatchEvent(new Event('change'));
 
-    // --- 4. ACTIVAR LA MÁSCARA DEL DUI ---
     const duiInput = document.getElementById('id_dui');
     if (duiInput && typeof IMask !== 'undefined') {
         IMask(duiInput, { mask: '00000000-0' });
@@ -517,7 +716,6 @@ function configurarFormularioCita() {
     }
 
     
-    // --- 5. MANEJAR EL ENVÍO (SUBMIT) DEL FORMULARIO ---
     const form = document.getElementById('form-crear-cita');
     
     if (form) {
@@ -545,18 +743,13 @@ function configurarFormularioCita() {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('modalCrearCita'));
                     modal.hide();
                     
-                    // En lugar de recargar toda la página, solo recargamos las citas
                     cargarCitas(); 
-
-
                     
                 } else if (status === 400) {
-                    // Error de Validación
-                    alert(`Error: ${data.error}`); // Muestra el error
+                    alert(`Error: ${data.error}`); 
                     submitButton.disabled = false;
                     submitButton.innerHTML = 'Guardar Cita';
                 } else {
-                    // Otro error
                     throw new Error(data.error || 'Error del servidor.');
                 }
             })
@@ -569,7 +762,6 @@ function configurarFormularioCita() {
         });
     }
 
-    // --- 6. LÓGICA DE DURACIÓN DEL TRATAMIENTO ---
     const selectTratamiento = document.getElementById('tratamiento');
     const duracionSpan = document.getElementById('duracion-minutos');
 
@@ -596,10 +788,34 @@ function configurarFormularioCita() {
         
             duracionSpan.textContent = texto;
         });
-        // Trigger para que se ejecute al cargar el modal
         selectTratamiento.dispatchEvent(new Event('change'));
     }
+
+    const btnMenos = document.getElementById('btn-hora-menos');
+    const btnMas = document.getElementById('btn-hora-mas');
+    const horaText = document.getElementById('hora_text'); 
+    const horaHidden = document.getElementById('hora');    
+
+    if (btnMenos && btnMas && horaText && horaHidden) {
+        
+        const incrementoMinutos = 15; 
+
+        const updateTime = (step) => {
+            let currentMinutes = horaAMinutos(horaText.value);
+            let newMinutes = currentMinutes + step;
+            
+            let newHora = minutosAHora(newMinutes);
+            
+            horaText.value = newHora;
+            horaHidden.value = newHora;
+        };
+
+        btnMenos.addEventListener('click', () => {
+            updateTime(-incrementoMinutos); 
+        });
+
+        btnMas.addEventListener('click', () => {
+            updateTime(incrementoMinutos); 
+        });
+    }
 }
-
-
-

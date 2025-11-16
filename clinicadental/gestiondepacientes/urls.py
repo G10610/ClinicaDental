@@ -5,6 +5,11 @@ from . import views
 urlpatterns = [
     
     path('lista/', views.lista, name='lista'),
+
+
+    #Para boton expediente y poder agreagr tratamiento y especialista a un pacxiente
+    path('pacientes/<int:paciente_id>/expediente/', views.expediente_paciente, name='expediente_paciente'),
+    path('expedientes/eliminar/<int:expediente_id>/', views.eliminar_expediente, name='eliminar_expediente'),
     
     # crud
 

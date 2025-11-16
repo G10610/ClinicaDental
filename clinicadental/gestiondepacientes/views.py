@@ -3,16 +3,18 @@ from .forms import PacienteForm
 from django.contrib.auth.decorators import login_required
 from . models import Paciente
 
-# funciones de gestion CRUD
+from .models import Paciente, PacienteTratamiento
+from .forms import ExpedienteForm
+from citas.models import Cita
 
+# CRUD Pacientes
 
 @login_required
 def lista(request):
-    """Muestra la lista completa de pacientes."""
     pacientes = Paciente.objects.all().order_by('apellido', 'nombre')
     return render(request, "listaPacientes.html", {"pacientes": pacientes})
 
-#crear paciente
+# Crear paciente
 @login_required
 def crear_paciente(request):
     if request.method == 'POST':
@@ -24,15 +26,12 @@ def crear_paciente(request):
         form = PacienteForm()
     return render(request, 'crearpacientes.html', {'form': form})
 
-#**Editar paciente**
-
-# GET: Carga los datos del paciente en el formulario de edición
+# Editar paciente
 @login_required
 def edicionPaciente(request, id):
   paciente = Paciente.objects.get(id=id)
   return render(request, "edicionPaciente.html", {"paciente": paciente})
 
-# POST: Recibe los datos del formulario y actualiza el registro en la base de datos
 @login_required
 def editarPaciente(request):
     
@@ -58,10 +57,54 @@ def editarPaciente(request):
     return redirect('lista')
 
 
-# eliminar paciente
+# Eliminar paciente
 @login_required
 def eliminar_paciente(request, id):
-    """Elimina un paciente específico."""
-    paciente = get_object_or_404(Paciente, pk=id) # También se recomienda usar get_object_or_404 aquí
+    paciente = get_object_or_404(Paciente, pk=id)
     paciente.delete()
     return redirect('lista')
+
+
+# Expediente de paciente
+def expediente_paciente(request, paciente_id):
+    paciente = get_object_or_404(Paciente, id=paciente_id)
+    
+    expedientes = PacienteTratamiento.objects.filter(
+        paciente=paciente
+    ).select_related('tratamiento', 'especialista')
+    
+    if request.method == 'POST':
+        form = ExpedienteForm(request.POST)
+        if form.is_valid():
+            expediente = form.save(commit=False)
+            expediente.paciente = paciente
+            expediente.save()
+            return redirect('expediente_paciente', paciente_id=paciente.id)
+    else:
+        form = ExpedienteForm(initial={'paciente': paciente})
+    
+    historial_citas = Cita.objects.filter(
+        paciente=paciente
+    ).select_related('especialista', 'tratamiento').order_by('-fecha_hora')
+
+    context = {
+        'paciente': paciente,
+        'expedientes': expedientes,
+        'form': form,
+        'historial_citas': historial_citas
+    }
+    
+    return render(request, 'expediente_paciente.html', context)
+
+
+# Eliminar tratamiento asignado a paciente
+def eliminar_expediente(request, expediente_id):
+    expediente = get_object_or_404(PacienteTratamiento, id=expediente_id)
+    paciente_id = expediente.paciente.id
+    
+    if request.method == 'POST':
+        expediente.delete()
+        return redirect('expediente_paciente', paciente_id=paciente_id)
+    
+    expediente.delete()
+    return redirect('expediente_paciente', paciente_id=paciente_id)

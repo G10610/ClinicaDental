@@ -1,13 +1,11 @@
-/* styles.css */
-
 /* ---------- 1. Colores base (tema claro) ---------- */
 :root {
-    --color-background: #FEF6FB;     /* Fondo claro */
+    --color-background: #FEF6FB;
     --color-sidebar: #FFFFFF;
     --color-content-bg: #FFFFFF;
-    --color-primary: #D14D9A;        /* Rosado principal */
-    --color-secondary: #9B59B6;      /* Morado secundario */
-    --color-danger: #E74C3C;         /* Rojo del borrar */
+    --color-primary: #D14D9A;
+    --color-secondary: #9B59B6;
+    --color-danger: #E74C3C;
     --color-text-primary: #333;
     --color-text-secondary: #888;
     --color-border: #EAEAEA;
@@ -36,7 +34,7 @@ h1, h2, h3, h4, h5, h6 {
 main.content-wrapper {
     width: 100%;
     padding: 2rem 3rem;
-    background-color: #fdf2f7;  
+    background-color: #fdf2f7;
 }
 
 .container {
@@ -47,12 +45,12 @@ main.content-wrapper {
     margin: 0 auto;
     border-radius: 10px;
     background-color: #fff;
-     border: 1px solid #dcdcdc;
+    border: 1px solid #dcdcdc;
 }
 
 .form-wrapper {
-    width: 85%;             /* ocupa 85% del ancho disponible */
-    max-width: 1200px;      
+    width: 85%;
+    max-width: 1200px;
     border-radius: 10px;
     background-color: #ffffff;
 }
@@ -139,8 +137,11 @@ main.content-wrapper {
   padding: 0.6rem 0.75rem;
 }
 
-/* ---------- 6. Botones ---------- */
+.table-responsive {
+    overflow: visible !important;
+}
 
+/* ---------- 6. Botones ---------- */
 .btn-primario {
     background-color: #bc3b6c;
     border-color: #bc3b6c;
@@ -150,7 +151,7 @@ main.content-wrapper {
 }
 
 .btn-primario:hover {
-    background-color: #a7305e; /* un poco más oscuro al pasar el mouse */
+    background-color: #a7305e;
     border-color: #a7305e;
     transform: translateY(-1px);
 }
@@ -187,76 +188,37 @@ main.content-wrapper {
 }
 .btn-borrar:hover { background-color: #C0392B; }
 
-
-
-
-
-/* ---------- 7. Tema oscuro ---------- */
-[data-theme='dark'] {
-    --color-background: #0E1117;
-    --color-sidebar: #161B22;
-    --color-content-bg: #1C2128;
-    --color-primary: #E066A4;
-    --color-secondary: #4C5FD7;
-    --color-danger: #E57373;
-    --color-text-primary: #E6E6E6;
-    --color-text-secondary: #A0A0A0;
-    --color-border: #2C323A;
+.btn-tab {
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #333;
 }
 
-/* ---------- 8. DataTables oscuro ---------- */
-[data-theme='dark'] .dataTables_wrapper {
-    color: var(--color-text-secondary);
+.btn-tab:hover {
+    background: #f5f5f5;
 }
 
-[data-theme='dark'] .table {
-    --bs-table-color: var(--color-text-primary);
-    --bs-table-bg: var(--color-content-bg);
-    --bs-table-border-color: var(--color-border);
-    --bs-table-striped-bg: #2c304d;
-    --bs-table-hover-bg: #3a3f66;
+.btn-tab.active {
+    background: #ddd;
+    color: #000;
+    font-weight: 600;
 }
 
-[data-theme='dark'] .table thead th {
-    color: var(--color-text-primary);
+.btn-accion-agenda.disabled {
+    background-color: #e9ecef;
+    color: #adb5bd;
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none; 
 }
 
-[data-theme='dark'] .dataTables_filter input,
-[data-theme='dark'] .dataTables_length select {
-    background-color: var(--color-sidebar);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border);
+.btn-accion-agenda.disabled:hover {
+    transform: none;
+    background-color: #e9ecef;
+    color: #adb5bd;
 }
 
-[data-theme='dark'] .page-item .page-link {
-    background-color: var(--color-sidebar);
-    color: var(--color-text-secondary);
-    border-color: var(--color-border);
-}
-
-[data-theme='dark'] .page-item.active .page-link {
-    background-color: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #fff;
-}
-
-[data-theme='dark'] .page-item.disabled .page-link {
-    background-color: var(--color-content-bg);
-    color: var(--color-text-secondary);
-    border-color: var(--color-border);
-}
-
-[data-theme='dark'] .card {
-    background-color: var(--color-content-bg);
-    border-color: var(--color-border);
-}
-
-[data-theme='dark'] .table tbody td {
-    color: var(--color-text-primary) !important;
-}
-
-
-/* ---------- 9. DataTables claro ---------- */
+/* ---------- 7. DataTables claro ---------- */
 .page-item.active .page-link {
     background-color: var(--color-primary);
     border-color: var(--color-primary);
@@ -267,17 +229,13 @@ main.content-wrapper {
     color: var(--color-primary);
 }
 
-
-/* ---------- Ajustes para tabla de pacientes ---------- */
-
-/*Permitir que la tabla use el 100% del ancho disponible */
+/* ---------- 8. Ajustes para tabla de pacientes ---------- */
 #pacientesTable {
     table-layout: fixed;
     width: 100%;
     word-wrap: break-word;
 }
 
-/* Control de anchos de cada columna*/
 #pacientesTable th:nth-child(1),
 #pacientesTable td:nth-child(1) {
     width: 10%; /* DUI */
@@ -315,29 +273,22 @@ main.content-wrapper {
     white-space: nowrap;
 }
 
-/* Color general del texto de los botones de paginación */
 .dataTables_wrapper .dataTables_paginate .paginate_button a,
 .dataTables_wrapper .dataTables_paginate .paginate_button {
     color: #080003;
     font-weight: 500;
 }
 
-/* ---------- 7. Estilos de la Agenda (Simplificado) ---------- */
-
-/* Esto es solo para darle un estilo único a las celdas de la tabla.
-   El resto del diseño (botones, inputs) lo maneja Bootstrap.
-*/
-
+/* ---------- 9. Estilos de la Agenda (Diaria) ---------- */
 #agenda-table tbody td {
-    padding: 1rem 1rem; /* Un poco de espacio */
+    padding: 1rem 1rem;
     vertical-align: middle;
 }
 
-/* Estilos para celdas específicas */
 .cell-hora {
     font-size: 1.05rem;
-    color: var(--color-primary); /* La hora destacada en rosado */
-    width: 120px; /* Ancho fijo */
+    color: var(--color-primary);
+    width: 120px; 
 }
 
 .cell-paciente {
@@ -350,9 +301,7 @@ main.content-wrapper {
     font-size: 0.9rem;
 }
 
-
-
-/* ---------- Barra superior de agenda ---------- */
+/* ---------- 10. Barra superior de agenda ---------- */
 .agenda-toolbar {
   display: flex;
   align-items: center;
@@ -373,13 +322,11 @@ main.content-wrapper {
   opacity: 0.8;
 }
 
-/* Reducir ligeramente todo el header de la agenda */
 .card-body h1.h5 {
   font-size: 1.1rem;
   color: var(--color-text-primary);
 }
 
-/* Estilo del badge de "Hoy" */
 #hoy-label {
   font-size: 0.8rem;
   font-weight: 500;
@@ -387,4 +334,323 @@ main.content-wrapper {
   padding: 0.2rem 0.5rem;
 }
 
+/* ---------- 11. Estilos de Agenda Semanal ---------- */
+.agenda-nav {
+    flex-grow: 1; 
+    justify-content: center; 
+}
 
+.agenda-nav .btn {
+    background-color: #fff;
+    border: 1px solid var(--color-border);
+    color: var(--color-primary);
+    border-radius: 6px;
+}
+.agenda-nav .btn:hover {
+    background-color: var(--color-background);
+}
+
+.agenda-grid {
+    table-layout: fixed; 
+    width: 100%;
+    border-color: var(--color-border); 
+}
+.agenda-grid thead th {
+    background-color: #eee; 
+    color: #000; 
+    font-weight: 600;
+    padding: 0.4rem 0.4rem;
+}
+.agenda-grid .th-dia-semana .fw-normal {
+    color: var(--color-text-secondary);
+    font-weight: 400 !important;
+    
+}
+.agenda-grid .th-hora {
+    width: 100px; 
+    font-weight: 600;
+}
+
+.agenda-grid td {
+    height: 100px; 
+    vertical-align: top;
+    padding: 0; 
+    border-color: #f0f0f0; 
+    transition: background-color 0.2s ease;
+}
+
+.agenda-grid tbody .fw-semibold {
+    color: #000;
+    font-size: 1rem !important;
+    font-weight: 600;
+    padding: 0.5rem;
+}
+
+.celda-agenda-semanal:hover {
+    background-color: var(--color-background);
+}
+
+.celda-agenda-semanal {
+    position: relative;
+    border-bottom: 1px solid #eee;
+    height: 40px; 
+}
+
+.celda-agenda-semanal::after {
+    content: ''; 
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed #e0e0e0; 
+    z-index: 1;
+}
+
+.cita-block {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    border-radius: 10px;
+    color: white;
+    font-size: 12px;
+    padding: 4px 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
+    z-index: 10;
+    cursor: pointer; 
+}
+
+.cita-paciente, 
+.cita-tratamiento {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    display: block; 
+}
+.cita-paciente {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.cita-tratamiento {
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+
+/* ---------- 12. Botones de Acción (Expediente) ---------- */
+.btn-accion-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; 
+    height: 34px;
+    padding: 0;
+    color: #fff; 
+    border: none;
+    transition: all 0.2s ease-in-out;
+    border-radius: 0.25rem; 
+}
+
+.btn-accion-expediente-txt {
+    color: #fff; 
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    height: 34px; 
+}
+
+.btn-accion-expediente-txt i {
+    color: #fff;
+}
+
+.btn-accion-modificar {
+    background-color: var(--color-secondary); 
+}
+.btn-accion-modificar:hover {
+    background-color: #8E44AD; 
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-accion-expediente-txt {
+    background-color: var(--color-primary); 
+    border-color: var(--color-primary);
+}
+.btn-accion-expediente-txt:hover {
+    background-color: #bc3b6c; 
+    border-color: #bc3b6c;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-accion-borrar {
+    background-color: var(--color-danger); 
+}
+.btn-accion-borrar:hover {
+    background-color: #C0392B; 
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* ---------- 13. Botones de Acción (Agenda Diaria) ---------- */
+.btn-accion-agenda {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px; 
+    height: 35px;
+    font-size: 0.9rem; 
+    padding: 0;
+    border: none;
+    transition: all 0.2s ease;
+    border-radius: 0.25rem; 
+}
+.btn-accion-agenda:hover {
+    color: #fff;
+    transform: translateY(-1px); 
+}
+
+.btn-accion-whatsapp {
+    background-color: #25D366;
+    color: #fff;
+}
+.btn-accion-whatsapp:hover {
+    background-color: #1EAE50;
+}
+
+.btn-accion-editar {
+    background-color: var(--color-secondary); 
+    color: #fff;
+}
+.btn-accion-editar:hover {
+    background-color: #8E44AD; 
+}
+
+.btn-accion-expediente {
+    background-color: var(--color-primary); 
+    color: #fff;
+}
+.btn-accion-expediente:hover {
+    background-color: #bc3b6c;
+}
+
+.btn-accion-menu {
+    background-color: #f8f9fa; 
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+.btn-accion-menu:hover {
+    background-color: #e2e6ea;
+    color: #000;
+}
+
+/* ---------- 14. Menú Contextual Citas (Semanal) ---------- */
+.menu-cita {
+    position: absolute;
+    display: none;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    padding: 8px 0;
+    z-index: 9999;
+    width: 180px;
+}
+
+.menu-cita button {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    font-size: 14px;
+}
+
+.menu-cita button:hover {
+    background: #f0f0f0;
+}
+
+.menu-separador {
+    border-top: 1px solid #ddd;
+    margin: 6px 0;
+}
+
+.menu-cita {
+    position: absolute;
+    background: white;
+    border-radius: 8px;
+    padding: 6px 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    min-width: 170px;
+    z-index: 99999;
+}
+
+.opcion-menu {
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.opcion-menu:hover {
+    background: #f0f0f0;
+}
+
+.menu-cita hr {
+    margin: 6px 0;
+    border: none;
+    border-top: 1px solid #ddd;
+}
+
+.menu-cita {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 4px 0;
+    width: 180px;
+    box-shadow: 0px 3px 10px rgba(0,0,0,0.2);
+    z-index: 9999;
+}
+
+.menu-cita .menu-item {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #333;
+}
+
+.menu-cita .menu-item:hover {
+    background-color: #f2f2f2;
+}
+
+.menu-cita {
+    position: absolute;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    padding: 4px 0;
+    z-index: 99999;
+    width: 200px;
+}
+
+.menu-cita .item {
+    padding: 8px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.menu-cita .item:hover {
+    background: #f5f5f5;
+}
+
+.menu-cita hr {
+    margin: 4px 0;
+}
+
+#menu-cita {
+  display: none; 
+}
+#menu-cita.show {
+  display: block;
+}

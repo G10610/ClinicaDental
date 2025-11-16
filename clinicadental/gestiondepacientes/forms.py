@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import Paciente
 import re
+from .models import PacienteTratamiento
 
 # Validadores de servidor seguridad extra
 dui_validator = RegexValidator(
@@ -106,3 +107,17 @@ class PacienteRapidoForm(forms.ModelForm):
         if dui and not re.match(r'^\d{8}-\d{1}$', dui):
             raise forms.ValidationError("El DUI debe tener el formato ########-#")
         return dui
+
+
+
+class ExpedienteForm(forms.ModelForm):
+    class Meta:
+        model = PacienteTratamiento
+        fields = ['tratamiento', 'especialista', 'fecha_inicio', 'fecha_fin', 'estado', 'notas']
+        widgets = {
+            'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'fecha_fin': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'notas': forms.Textarea(attrs={'rows': 3}),
+        }
+    
+    

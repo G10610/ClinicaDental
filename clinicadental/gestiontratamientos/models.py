@@ -12,3 +12,6 @@ class Tratamiento(models.Model):
     class Meta:
         db_table = 'tratamiento'
 
+    def __str__(self):
+        return self.nombre 
+
