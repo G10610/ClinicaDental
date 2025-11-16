@@ -1,0 +1,193 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Agenda
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body py-2 px-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2" style="min-width: 180px;">
+          <i class="bi bi-calendar-week text-primary fs-4"></i>
+          <h1 class="h5 mb-0 fw-semibold" id="titulo-agenda">Agenda diaria</h1>
+        </div>
+
+                <div class="d-flex align-items-center gap-2 ms-3">
+          <i class="bi bi-person-badge text-secondary fs-5"></i>
+          
+          <select id="filtro-especialista" name="especialista_id" class="form-select form-select-sm" style="min-width: 230px;">
+            
+            <option value="">Seleccione un especialista...</option>
+
+            {% for esp in lista_especialistas %}
+              <option 
+                value="{{ esp.id }}" 
+                {% if esp.id == especialista_seleccionado_id %}selected{% endif %}
+              >
+                {{ esp.nombre }} {{esp.apellido}}
+              </option>
+            {% endfor %}
+
+          </select>
+        </div>
+
+                <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-calendar-date text-secondary fs-5"></i>
+          <input type="date" id="filtro-fecha" class="form-control form-control-sm" style="min-width: 170px;" value="{{ today }}">
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+
+      <!-- Botones Día/Semana -->
+      <div class="btn-group" role="group">
+        <button type="button" id="btn-dia" class="btn btn-tab btn-sm active">
+          Día
+        </button>
+        <a href="{% url 'agenda_semanal' %}" class="btn btn-tab btn-sm">
+          Semana
+        </a>
+      </div>
+
+            <div class="d-flex align-items-center gap-2">
+        <button id="prev-dia" class="btn btn-light btn-sm border">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <h6 id="fecha-legible" class="mb-0 fw-semibold text-secondary">31 de octubre de 2025</h6>
+        <button id="next-dia" class="btn btn-light btn-sm border">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+
+            <button type="button" class="btn btn-sm btn-primario d-flex align-items-center px-3" 
+        data-bs-toggle="modal" data-bs-target="#modalCrearCita">
+          <i class="bi bi-plus-circle me-2"></i> Nueva cita
+      </button>
+    </div>
+
+        <div class="table-responsive">
+      <table class="table table-hover align-middle" id="agenda-table">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">Hora</th>
+            <th scope="col">Paciente</th>
+            <th scope="col">Tratamiento</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        
+                <tbody>
+                    </tbody>
+              </table>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal fade" id="modalCrearCita" tabindex="-1" aria-labelledby="modalCrearCitaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg"> <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCrearCitaLabel">
+          <i class="bi bi-calendar-plus text-primary me-2"></i>
+          Crear Nueva Cita
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body" id="modal-body-form-cita">
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mb-0 ms-3">Cargando formulario...</p>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="modalEditarCita" tabindex="-1" aria-labelledby="modalEditarCitaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg"> 
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEditarCitaLabel">
+          <i class="bi bi-pencil-square text-primary me-2"></i>
+          Editar Cita
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+            <div class="modal-body" id="modal-body-form-editar-cita">
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mb-0 ms-3">Cargando datos de la cita...</p>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const selectEspecialista = document.getElementById("filtro-especialista");
+    if (!selectEspecialista) return;
+
+    // 1️⃣ Restaurar especialista guardado
+    const especialistaGuardado = localStorage.getItem("especialista_id");
+    if (especialistaGuardado) {
+        selectEspecialista.value = especialistaGuardado;
+    }
+
+    // 2️⃣ Guardar cuando el usuario seleccione uno nuevo
+    selectEspecialista.addEventListener("change", function() {
+        const valor = selectEspecialista.value;
+        if (valor) {
+            localStorage.setItem("especialista_id", valor);
+        } else {
+            localStorage.removeItem("especialista_id");
+        }
+    });
+});
+</script>
+
+<script>
+  const buscarPacientesURL = "{% url 'buscar_pacientes' %}";
+  const agendaDiaURL = "{% url 'agenda' %}";
+  const apiGetCitasURL = "{% url 'api_get_citas' %}"; 
+  const apiCambiarEstadoURL = "{% url 'api_cambiar_estado' %}";
+  const urlExpedienteTemplate = "{% url 'expediente_paciente' 0 %}";
+  const urlEditarCitaTemplate = "{% url 'editar_cita' 0 %}";
+  
+</script>
+<script src="https://unpkg.com/imask"></script>
+<script src="{% static 'js/agenda.js' %}"></script>
+
+{% endblock %}

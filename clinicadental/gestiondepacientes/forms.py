@@ -3,6 +3,7 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from .models import Paciente
+import re
 from .models import PacienteTratamiento
 
 # Validadores de servidor seguridad extra
@@ -38,7 +39,6 @@ class PacienteForm(forms.ModelForm):
             }),
             'dui': forms.TextInput(attrs={
                 'class': 'form-control',
-                'required': True,
                 'placeholder': '12345678-9',
                 'pattern': r'\d{8}-\d',
                 'title': '8 dígitos, guion y 1 dígito (12345678-9)'
@@ -58,6 +58,7 @@ class PacienteForm(forms.ModelForm):
     #Campos no obligatorios
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['dui'].required = False 
         self.fields['fecha_ingreso'].required = False
         self.fields['correo'].required = False
         self.fields['telefono'].required = False
@@ -66,6 +67,10 @@ class PacienteForm(forms.ModelForm):
     # forms.py
     def clean_dui(self):
         dui = self.cleaned_data['dui']
+
+        if not dui:
+            return dui
+            
         qs = Paciente.objects.filter(dui=dui)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)  # ignorar el paciente actual
@@ -80,6 +85,28 @@ class PacienteForm(forms.ModelForm):
             raise forms.ValidationError('La fecha de ingreso no puede ser futura.')
         return fecha
     
+class PacienteRapidoForm(forms.ModelForm):
+    class Meta:
+        model = Paciente
+        fields = ['nombre', 'apellido', 'telefono', 'dui']
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$', nombre):
+            raise forms.ValidationError("El nombre solo puede contener letras y espacios.")
+        return nombre
+
+    def clean_apellido(self):
+        apellido = self.cleaned_data.get('apellido')
+        if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$', apellido):
+            raise forms.ValidationError("El apellido solo puede contener letras y espacios.")
+        return apellido
+
+    def clean_dui(self):
+        dui = self.cleaned_data.get('dui')
+        if dui and not re.match(r'^\d{8}-\d{1}$', dui):
+            raise forms.ValidationError("El DUI debe tener el formato ########-#")
+        return dui
 
 
 

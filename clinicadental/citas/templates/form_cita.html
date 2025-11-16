@@ -1,0 +1,170 @@
+<form id="form-crear-cita" method="POST" 
+      action="{% if cita_instancia %}{% url 'editar_cita' cita_instancia.id %}{% else %}{% url 'crear_cita' %}{% endif %}">
+    {% csrf_token %}
+    
+    <div class="row g-3">
+
+    {% if cita_instancia %}
+        <div class="col-12 mb-3">
+            <label class="form-label">Paciente:</label>
+            <p class="form-control-plaintext fw-semibold fs-5">
+                <i class="bi bi-person-fill text-primary me-2"></i>
+                {{ cita_instancia.paciente.nombre }} {{ cita_instancia.paciente.apellido }}
+            </p>
+            <input type="hidden" name="paciente_id" value="{{ cita_instancia.paciente.id }}">
+        </div>
+
+    {% else %}
+        <div class="col-md-6 position-relative mb-3" id="contenedor-buscar-paciente"> 
+            <label for="buscarPaciente" class="form-label">
+                Buscar paciente: <span class="text-danger">*</span>
+            </label>
+            <input type="text" id="buscarPaciente" name="buscarPaciente" placeholder="Buscar paciente..."
+                   autocomplete="off"class="form-control" >
+            <input type="hidden" id="paciente_id" name="paciente_id" required>
+            
+            <div id="resultadosPacientes" 
+                 class="list-group position-absolute w-100" 
+                 style="z-index: 1050;"> 
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3 d-flex align-items-end justify-content-start">
+            <div class="form-check form-switch pt-2">
+                <input class="form-check-input" type="checkbox" id="check-nuevo-paciente" name="check-nuevo-paciente">
+                <label class="form-check-label" for="check-nuevo-paciente">
+                    Registrar nuevo paciente
+                </label>
+            </div>
+        </div>
+
+        <div class="row g-3" id="campos-nuevo-paciente" style="display: none;">
+            <div class="col-md-6">
+                <label for="nuevo_paciente_nombre" class="form-label">Nombre:</label>
+                <input type="text" id="nuevo_paciente_nombre" name="nombre" class="form-control"
+                       pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"
+                       title="Solo se permiten letras"
+                       oninvalid="if (this.value === '') { this.setCustomValidity('Por favor, complete este campo.'); } else { this.setCustomValidity('El nombre solo puede contener letras y espacios.'); }"
+                       oninput="this.setCustomValidity('')">
+            </div>
+            <div class="col-md-6">
+                <label for="nuevo_paciente_apellido" class="form-label">Apellido:</label>
+                <input type="text" id="nuevo_paciente_apellido" name="apellido" class="form-control"
+                       pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$"
+                       title="Solo se permiten letras"
+                       oninvalid="if (this.value === '') { this.setCustomValidity('Por favor, complete este campo.'); } else { this.setCustomValidity('El apellido solo puede contener letras y espacios.'); }"
+                       oninput="this.setCustomValidity('')">
+            </div>
+            <div class="col-md-6">
+                <label for="nuevo_paciente_telefono" class="form-label">Teléfono (opcional):</label>
+                <input type="tel" id="nuevo_paciente_telefono" name="telefono" class="form-control"
+                       placeholder="+503 1234-5678"
+                       pattern="^\+?\d[\d\- ]{7,14}$"
+                       title="El teléfono debe tener entre 8 y 15 caracteres, solo números, espacios o guiones."
+                       oninvalid="this.setCustomValidity('El teléfono debe tener entre 8 y 15 caracteres, solo números, espacios o guiones.')"
+                       oninput="this.setCustomValidity('')">
+            </div>
+            <div class="col-md-6">
+                <label for="dui" class="form-label">Dui (opcional):</label>
+                <input type="text" id="id_dui" name="dui" class="form-control"
+                       pattern="^\d{8}-\d{1}$"
+                       oninvalid="this.setCustomValidity('Por favor, use el formato: ########-#')"
+                       oninput="this.setCustomValidity('')">
+            </div>
+        </div>
+    {% endif %}
+    <div class="col-md-6">
+        <label class="form-label">Especialista:</label>
+        <p class="form-control-plaintext fw-semibold mb-0">
+            {% for e in especialistas %}
+                {% if e.id|stringformat:"s" == initial_data.especialista_id %}
+                    {{ e.nombre }} {{ e.apellido }}
+                {% endif %}
+            {% endfor %}
+        </p>
+        <small class="form-text text-muted">
+            {% for e in especialistas %}
+                {% if e.id|stringformat:"s" == initial_data.especialista_id %}
+                    {{ e.especialidad }}
+                {% endif %}
+            {% endfor %}
+        </small>
+        <input type="hidden" name="especialista_id" value="{{ initial_data.especialista_id }}">
+    </div>
+
+    <div class="col-md-6">
+        <label for="tratamiento" class="form-label">Motivo de consulta:</label>
+        <select id="tratamiento" name="tratamiento_id" class="form-select" required>
+            <option value="" disabled>Selecciona...</option>
+            {% for t in tratamientos %}
+                <option value="{{ t.id }}" 
+                        data-duracion="{{ t.duracion_minutos }}"
+                        {% if cita_instancia and cita_instancia.tratamiento_id == t.id %}selected{% endif %}
+                >
+                    {{ t.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        <small id="duracion-tratamiento" class="form-text text-muted">
+            Duración aproximada: <span id="duracion-minutos">—</span>
+        </small>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Fecha:</label>
+        <p class="form-control-plaintext fw-semibold">
+            {{ initial_data.fecha_legible }}
+        </p>
+        <input type="hidden" name="fecha" value="{{ initial_data.fecha }}">
+    </div>
+    
+    <div class="col-md-6">
+        <label for="hora" class="form-label">Hora</label>
+        
+        {% if view_mode == 'daily' %}
+            <select id="hora" name="hora" class="form-select" required>
+                <option value="">Seleccione una hora...</option>
+                
+                {% for slot in slots_disponibles %}
+                    {% with slot_time=slot|time:'H:i' %}
+                    <option 
+                        value="{{ slot_time }}"
+                        {% if slot_time == initial_data.hora %}selected{% endif %}
+                    >
+                        {{ slot|time:'h:i A' }}
+                    </option>
+                    {% endwith %}
+                {% endfor %}
+
+            </select>
+        
+        {% else %}
+            <div class="input-group">
+                <button class="btn btn-outline-secondary" type="button" id="btn-hora-menos">
+                    <i class="bi bi-dash"></i>
+                </button>
+                <input type="text" class="form-control text-center" id="hora_text" value="{{ initial_data.hora }}" readonly
+                       style="background-color: white; cursor: default;">
+                <button class="btn btn-outline-secondary" type="button" id="btn-hora-mas">
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+            <input type="hidden" name="hora" id="hora" value="{{ initial_data.hora }}">
+        {% endif %}
+    </div>
+
+    <div class="col-12">
+        <label for="detalles" class="form-label">Detalles (Opcional):</label>
+        <textarea id="detalles" name="detalles" class="form-control" rows="3">{% if cita_instancia %}{{ cita_instancia.detalles|default:'' }}{% endif %}</textarea>
+    </div>
+        
+    </div> <div class="modal-footer-contenido mt-4 text-end">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-primario" form="form-crear-cita">Guardar Cita</button>
+    </div>
+
+</form>
+
+
+
+

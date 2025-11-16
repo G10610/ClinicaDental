@@ -6,11 +6,6 @@ from django.db import IntegrityError
 
 User = get_user_model()
 
-@login_required
-def home(request):
-    return render(request, 'home.html')
-
-
 def signup(request):
     if request.method == 'GET':
         form = UserCreationForm()
@@ -21,7 +16,7 @@ def signup(request):
         try:
             user = form.save()
             login(request, user)
-            return redirect(home)
+            return redirect('agenda')
         except IntegrityError:
             return render(request, 'signup.html', {
                 'form': form,
@@ -51,7 +46,7 @@ def iniciarsesion(request):
     if form.is_valid():
         user = form.get_user()
         login(request, user)
-        return redirect(home)
+        return redirect('agenda')
     else:
         return render(request, 'iniciar.html', {
             'form': form,

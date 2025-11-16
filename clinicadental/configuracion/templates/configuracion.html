@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Configuración de la Clínica
+{% endblock %}
+
+{% block content %}
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-gear-fill text-primary me-2"></i>
+            Ajustes de la Clínica
+        </h1>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.hora_apertura.id_for_label }}" class="form-label">
+                            {{ form.hora_apertura.label }}
+                        </label>
+                        {{ form.hora_apertura }}
+                        {% if form.hora_apertura.errors %}
+                            <div class="text-danger small">{{ form.hora_apertura.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.hora_cierre.id_for_label }}" class="form-label">
+                            {{ form.hora_cierre.label }}
+                        </label>
+                        {{ form.hora_cierre }}
+                         {% if form.hora_cierre.errors %}
+                            <div class="text-danger small">{{ form.hora_cierre.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr class="my-3">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.intervalo_citas.id_for_label }}" class="form-label">
+                            {{ form.intervalo_citas.label }}
+                        </label>
+                        {{ form.intervalo_citas }}
+                        <div class="form-text">
+                            El tiempo para cada espacio de cita en la agenda.
+                        </div>
+                         {% if form.intervalo_citas.errors %}
+                            <div class="text-danger small">{{ form.intervalo_citas.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.dias_laborales.id_for_label }}" class="form-label">
+                            {{ form.dias_laborales.label }}
+                        </label>
+                        {{ form.dias_laborales }}
+                        {% if form.dias_laborales.errors %}
+                            <div class="text-danger small">{{ form.dias_laborales.errors.as_text }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primario px-4 py-2">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Guardar Cambios
+                    </button>
+                </div>
+    
+            </form>
+        </div>
+    </div>
+
+{% endblock %}

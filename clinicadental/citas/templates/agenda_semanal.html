@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Agenda Semanal
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body py-2 px-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-2" style="min-width: 180px;">
+          <i class="bi bi-calendar-week text-primary fs-4"></i>
+          <h1 class="h5 mb-0 fw-semibold" id="titulo-agenda">Agenda semanal</h1>
+        </div>
+                <div class="d-flex align-items-center gap-2 ms-3">
+          <i class="bi bi-person-badge text-secondary fs-5"></i>
+          <select id="filtro-especialista" name="especialista_id" class="form-select form-select-sm" style="min-width: 230px;">
+            <option value="">Seleccione un especialista...</option>
+            {% for esp in lista_especialistas %}
+              <option 
+                value="{{ esp.id }}" 
+                {% if esp.id == especialista_seleccionado_id %}selected{% endif %}
+              >
+                {{ esp.nombre }} {{ esp.apellido }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+                <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-calendar-date text-secondary fs-5"></i>
+          <input type="date" id="filtro-fecha"
+          class="form-control form-control-sm"
+          style="min-width: 170px;"
+          value="{{ request.GET.fecha|default:today|date:'Y-m-d' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+
+            <div class="btn-group" role="group">
+        <a href="{% url 'agenda' %}" class="btn btn-tab btn-sm">
+          Día
+        </a>
+        <button type="button" id="btn-semana" class="btn btn-tab btn-sm active">
+          Semana
+        </button>
+      </div>
+
+            <div class="d-flex align-items-center gap-2 agenda-nav">
+        <button id="prev-semana" class="btn btn-light btn-sm">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+                <h6 id="fecha-legible" class="mb-0 fw-semibold text-secondary" style="min-width: 260px; text-align: center;">
+            Semana del {{ dias_semana.0|date:"d/m" }} al {{ dias_semana|last|date:"d/m" }}
+        </h6>
+        <button id="next-semana" class="btn btn-light btn-sm">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+
+            <div style="min-width: 80px;"></div>
+
+    </div>
+
+        <div class="table-responsive" id="agenda-semanal-container">
+      <table class="table table-bordered text-center align-middle agenda-grid" id="agenda-semanal-grid">
+        <thead class="table-light">
+          <tr>
+            <th class="th-hora">Hora</th>             {% for dia in dias_semana %}
+              <th class="th-dia-semana">
+                {{ dia|date:"D" }}<br>
+                <span class="fw-normal fs-6">{{ dia|date:"d" }}</span>               </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody id="agenda-body" data-intervalo="{{ intervalo }}">
+          {% for hora in horas_dia %}
+          <tr>
+            <td class="fw-semibold align-middle" style="font-size: 0.9em;">{{ hora }}</td>
+            {% for dia in dias_semana %}
+              <td 
+                class="celda-agenda-semanal"
+                data-date="{{ dia|date:'Y-m-d' }}"
+                data-time="{{ hora }}"
+                style="position: relative; cursor: pointer;"               ></td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="modal fade" id="modalCrearCita" tabindex="-1" aria-labelledby="modalCrearCitaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCrearCitaLabel">
+          <i class="bi bi-calendar-plus text-primary me-2"></i>
+          Crear Nueva Cita
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body" id="modal-body-form-cita">
+        
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mb-0 ms-3">Cargando formulario...</p>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEditarCita" tabindex="-1" aria-labelledby="modalEditarCitaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg"> 
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEditarCitaLabel">
+          <i class="bi bi-pencil-square text-primary me-2"></i>
+          Editar Cita
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+            <div class="modal-body" id="modal-body-form-editar-cita">
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mb-0 ms-3">Cargando datos de la cita...</p>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="menu-cita" class="menu-cita">
+    <div id="menu-contenido"></div>
+</div>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  const buscarPacientesURL = "{% url 'buscar_pacientes' %}";
+  const apiGetCitasURL = "{% url 'api_get_citas_semana' %}";
+  const urlExpedienteTemplate = "{% url 'expediente_paciente' 0 %}";
+  const apiCambiarEstadoURL = "{% url 'api_cambiar_estado' %}";
+  const urlEditarCitaTemplate = "{% url 'editar_cita' 0 %}";
+</script>
+
+<script src="https://unpkg.com/imask"></script>
+<script src="{% static 'js/agenda_semanal.js' %}"></script>
+
+{% endblock %}

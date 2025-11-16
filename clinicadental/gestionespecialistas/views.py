@@ -45,6 +45,7 @@ def editarEspecialista(request):
     especialista = Especialista.objects.get(id=especialista_id)
     especialista.nombre = nombre
     especialista.apellido = apellido
+    especialista.especialidad = especialidad
     especialista.correo = correo
     especialista.telefono = telefono
     especialista.dui = dui
