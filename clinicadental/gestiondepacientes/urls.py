@@ -24,4 +24,7 @@ urlpatterns = [
     path('editarpaciente/', views.editarPaciente, name='editarpaciente'), 
 
     path('eliminar/<int:id>/', views.eliminar_paciente, name='eliminarpaciente'),
+
+    path('tratamiento/<int:tratamiento_id>/estado/<str:nuevo_estado>/', views.cambiar_estado_tratamiento, name='cambiar_estado_tratamiento'),
+    
 ]

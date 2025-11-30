@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import PacienteForm
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import PacienteTratamiento
 from . models import Paciente
 
 from .models import Paciente, PacienteTratamiento
 from .forms import ExpedienteForm
 from citas.models import Cita
+from django.db import IntegrityError
 
 # CRUD Pacientes
 
@@ -60,10 +63,18 @@ def editarPaciente(request):
 # Eliminar paciente
 @login_required
 def eliminar_paciente(request, id):
-    paciente = get_object_or_404(Paciente, pk=id)
-    paciente.delete()
+    paciente = get_object_or_404(Paciente, id=id)
+    
+    if request.method == 'POST':
+        try:
+            nombre = paciente.nombre # Guardamos el nombre para el mensaje
+            paciente.delete()
+            messages.success(request, f"El paciente {nombre} fue eliminado correctamente.")
+            
+        except IntegrityError:
+            messages.error(request, "No se puede eliminar este paciente porque tiene Historial (Citas o Tratamientos) asociados. Debes borrar esos registros primero.")
+            
     return redirect('lista')
-
 
 # Expediente de paciente
 def expediente_paciente(request, paciente_id):
@@ -108,3 +119,20 @@ def eliminar_expediente(request, expediente_id):
     
     expediente.delete()
     return redirect('expediente_paciente', paciente_id=paciente_id)
+
+
+@login_required
+def cambiar_estado_tratamiento(request, tratamiento_id, nuevo_estado):
+    tratamiento = get_object_or_404(PacienteTratamiento, id=tratamiento_id)
+    
+    # Validamos el estado
+    estados_validos = ['PENDIENTE', 'EN_PROCESO', 'COMPLETADO', 'CANCELADO']
+    if nuevo_estado in estados_validos:
+        tratamiento.estado = nuevo_estado
+        tratamiento.save()
+        messages.success(request, f"Estado actualizado a {nuevo_estado}")
+    else:
+        messages.error(request, "Estado no válido")
+    
+    # Redirigimos de vuelta al expediente del paciente
+    return redirect('expediente_paciente', paciente_id=tratamiento.paciente.id)

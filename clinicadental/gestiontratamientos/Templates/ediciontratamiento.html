@@ -8,13 +8,7 @@
     <div class="form-wrapper bg-white shadow p-4">
         <h1 class="text-center mb-4">Editar Paciente</h1>
         
-        {% if messages %}
-        <div class="alert alert-success" role="alert">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-        </div>
-        {% endif %}
+       
 
         <form action="{% url 'editartratamiento' %}" method="POST">
             {% csrf_token %}

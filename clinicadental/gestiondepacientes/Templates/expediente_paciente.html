@@ -28,41 +28,45 @@
     </div>
 
     <div class="collapse mb-4" id="nuevoTratamiento">
-        <div class="card">
-            <div class="card-header">
-                <h5>Asignar Nuevo Tratamiento</h5>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold ">Asignar Nuevo Tratamiento</h5>
             </div>
-            <div class="card-body">
-                <form method="post">
+            <div class="card-body p-4">
+                
+                <form method="POST">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                {{ form.tratamiento.label_tag }}
-                                {{ form.tratamiento }}
-                            </div>
-                            <div class="form-group">
-                                {{ form.especialista.label_tag }}
-                                {{ form.especialista }}
-                            </div>
+                    <div class="row g-3">
+                        {% for field in form %}
+                        <div class="col-12 col-md-6">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-medium">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            
+                            {{ field }}
+                            
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                    <span class="text-danger small d-block">{{ error }}</span>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                {{ form.fecha_inicio.label_tag }}
-                                {{ form.fecha_inicio }}
-                            </div>
-                            <div class="form-group">
-                                {{ form.estado.label_tag }}
-                                {{ form.estado }}
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="form-group">
-                        {{ form.notas.label_tag }}
-                        {{ form.notas }}
+
+                    <div class="mt-4 text-end">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-toggle="collapse" data-bs-target="#nuevoTratamiento">Cancelar</button>
+                        <button class="btn btn-primario px-4">Guardar</button>
                     </div>
-                    <button type="submit" class="btn btn-success">Guardar Tratamiento</button>
                 </form>
+                
             </div>
         </div>
     </div>
@@ -99,18 +103,46 @@
                                     {% elif expediente.estado == 'EN_PROCESO' %}bg-primary
                                     {% elif expediente.estado == 'PENDIENTE' %}bg-warning
                                     {% else %}bg-danger{% endif %}">
-                                    {{ expediente.estado }}
+                                    {{ expediente.state|default:expediente.estado|title }}
                                 </span>
                             </td>
                             <td>{{ expediente.notas|truncatewords:5|default:"-" }}</td>
                             <td>
-                                <form method="post" action="{% url 'eliminar_expediente' expediente.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger" 
-                                            onclick="return confirm('¿Eliminar este tratamiento?')">
-                                        Eliminar
-                                    </button>
-                                </form>
+                                <div class="d-flex gap-1">
+                                    
+                                    {% if expediente.estado == 'PENDIENTE' %}
+                                    <a href="{% url 'cambiar_estado_tratamiento' expediente.id 'EN_PROCESO' %}" 
+                                    class="btn btn-sm btn-primary" 
+                                    title="Iniciar Tratamiento">
+                                        <i class="bi bi-play-fill"></i> </a>
+                                    {% endif %}
+
+                                    {% if expediente.estado == 'PENDIENTE' or expediente.estado == 'EN_PROCESO' %}
+                                    <a href="{% url 'cambiar_estado_tratamiento' expediente.id 'COMPLETADO' %}" 
+                                    class="btn btn-sm btn-success" 
+                                    title="Marcar como Completado">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    {% if expediente.estado != 'COMPLETADO' and expediente.estado != 'CANCELADO' %}
+                                    <a href="{% url 'cambiar_estado_tratamiento' expediente.id 'CANCELADO' %}" 
+                                    class="btn btn-sm btn-warning text-white" 
+                                    title="Cancelar Tratamiento"
+                                    onclick="return confirm('¿Seguro que desea cancelar este tratamiento?')">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    <form method="post" action="{% url 'eliminar_expediente' expediente.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                title="Eliminar Registro"
+                                                onclick="return confirm('¿Eliminar DEFINITIVAMENTE este tratamiento?')">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
