@@ -111,13 +111,25 @@ class PacienteRapidoForm(forms.ModelForm):
 
 
 class ExpedienteForm(forms.ModelForm):
+    estado = forms.ChoiceField(
+        choices=[
+            ('PENDIENTE', 'Pendiente'),
+            ('EN_PROCESO', 'En Proceso'), 
+            ('COMPLETADO', 'Completado'), 
+            ('CANCELADO', 'Cancelado'),
+        ],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        initial='PENDIENTE' 
+    )
     class Meta:
         model = PacienteTratamiento
         fields = ['tratamiento', 'especialista', 'fecha_inicio', 'fecha_fin', 'estado', 'notas']
         widgets = {
-            'fecha_inicio': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'fecha_fin': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'notas': forms.Textarea(attrs={'rows': 3}),
+            'tratamiento': forms.Select(attrs={'class': 'form-select'}),
+            'especialista': forms.Select(attrs={'class': 'form-select'}),
+            'fecha_inicio': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'fecha_fin': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
     
     

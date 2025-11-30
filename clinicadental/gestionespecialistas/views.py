@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import CrearEspecialistaForm
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import IntegrityError
 from . models import Especialista
 # Create your views here.
 
@@ -57,8 +59,16 @@ def editarEspecialista(request):
 # eliminar especialista
 @login_required
 def eliminar_especialista(request, id):
-    """Elimina un especialista específico."""
-    especialista = get_object_or_404(Especialista, pk=id) # También se recomienda usar get_object_or_404 aquí
-    especialista.delete()
-    return redirect('listae')
-
+    especialista = get_object_or_404(Especialista, id=id)
+    
+    if request.method == 'POST':
+        try:
+            # Intentamos borrar
+            nombre = especialista.nombre
+            especialista.delete()
+            messages.success(request, f"El especialista {nombre} fue eliminado correctamente.")
+            
+        except IntegrityError:
+            messages.error(request, "No se puede eliminar este especialista porque tiene Citas o Tratamientos asignados.")
+            
+    return redirect('listae') 

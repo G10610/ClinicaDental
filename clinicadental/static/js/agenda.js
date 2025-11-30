@@ -9,6 +9,35 @@ document.addEventListener('DOMContentLoaded', function () {
     const tituloAgenda = document.getElementById('titulo-agenda');
     const especialistaSelect = document.getElementById('filtro-especialista');
     const tablaCitasBody = document.querySelector('#agenda-table tbody');
+    const btnNuevaCita = document.getElementById('btn-nueva-cita');
+
+    //Nueva funcion para habilitar/deshabilitar boton para crear citas
+    function actualizarEstadoBoton() {
+        if (!btnNuevaCita) return; 
+
+        const especialistaId = especialistaSelect.value;
+        
+        if (especialistaId) {
+            btnNuevaCita.disabled = false; 
+            btnNuevaCita.classList.remove('disabled'); // Visualmente habilitado
+            btnNuevaCita.title = ""; // Quita mensaje de ayuda
+        } else {
+            btnNuevaCita.disabled = true;  // Deshabilita
+            btnNuevaCita.classList.add('disabled'); 
+            btnNuevaCita.title = "Seleccione un especialista primero"; 
+        }
+    }
+
+    
+    actualizarEstadoBoton();
+
+    // 2. Cuando cambie el select de especialista
+    especialistaSelect.addEventListener('change', () => {
+        actualizarEstadoBoton();
+        cargarCitas(); 
+    });
+
+
 
     if (!fechaInput || !fechaLegible || !prevBtn || !nextBtn || !especialistaSelect || !tablaCitasBody) {
         console.error('Faltan elementos del DOM en agenda.js');
